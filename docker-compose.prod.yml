@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: prod_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-terminal_prod_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-prod_secure_password_min32}
+      POSTGRES_DB: ${POSTGRES_DB:-terminal_relational_prod}
+    volumes:
+      - prod_postgres_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: prod_timescaledb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${TIMESCALE_USER:-terminal_prod_user}
+      POSTGRES_PASSWORD: ${TIMESCALE_PASSWORD:-prod_secure_password_min32}
+      POSTGRES_DB: ${TIMESCALE_DB:-terminal_timeseries_prod}
+    volumes:
+      - prod_timescaledb_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+
+  redis:
+    image: redis:7-alpine
+    container_name: prod_redis
+    restart: unless-stopped
+    volumes:
+      - prod_redis_data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: prod_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_SERVER=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-terminal_prod_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-prod_secure_password_min32}
+      - POSTGRES_DB=${POSTGRES_DB:-terminal_relational_prod}
+      - TIMESCALE_SERVER=timescaledb
+      - TIMESCALE_PORT=5432
+      - TIMESCALE_USER=${TIMESCALE_USER:-terminal_prod_user}
+      - TIMESCALE_PASSWORD=${TIMESCALE_PASSWORD:-prod_secure_password_min32}
+      - TIMESCALE_DB=${TIMESCALE_DB:-terminal_timeseries_prod}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-prod_jwt_secret_key_change_in_production}
+    depends_on:
+      - postgres
+      - timescaledb
+      - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: prod_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+volumes:
+  prod_postgres_data:
+  prod_timescaledb_data:
+  prod_redis_data:
