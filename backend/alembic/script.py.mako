@@ -1,0 +1,1 @@
+"""mako script template"""
