@@ -30,7 +30,7 @@ export function App() {
       id: newId,
       type,
       title,
-      symbol: 'AAPL',
+      symbol: 'RELIANCE',
       layout: { i: newId, x: 0, y: Infinity, w: defaultW, h: defaultH },
     };
     setPanelsAndDebounceSave([...panels, newPanel]);
@@ -55,17 +55,17 @@ export function App() {
           <div className="flex items-center justify-between border border-slate-800 bg-slate-900/40 rounded-lg p-3">
             <div>
               <h2 className="text-xs font-bold text-slate-200">
-                Workspace Panel Grid: <span className="text-emerald-400 capitalize">{activeTab}</span>
+                Indian Market Workspace (NSE/BSE): <span className="text-emerald-400 capitalize">{activeTab}</span>
               </h2>
               <p className="text-[11px] text-slate-500">
-                Phase 10 Persisted Workspace Layout System. Syncing layout changes automatically with 500ms debounce to PostgreSQL.
+                Phase 24 Indian Market Configuration Active (RELIANCE, TCS, INFY, NIFTY50). Syncing layout changes automatically.
               </p>
             </div>
             <PanelAdder onAddPanel={handleAddPanel} />
           </div>
 
           {isLoading ? (
-            <div className="text-xs text-slate-500 animate-pulse p-12 text-center">Loading Workspace Layout...</div>
+            <div className="text-xs text-slate-500 animate-pulse p-12 text-center">Loading Indian Market Layout...</div>
           ) : (
             <WorkspaceGrid
               panels={panels}

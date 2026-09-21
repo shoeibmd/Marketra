@@ -14,9 +14,33 @@ from app.services.providers.base import (
     InstrumentNotFoundError,
 )
 
+INDIAN_STOCKS = [
+    {"symbol": "RELIANCE", "name": "Reliance Industries Ltd.", "exchange": "NSE", "base_price": 2850.0},
+    {"symbol": "TCS", "name": "Tata Consultancy Services", "exchange": "NSE", "base_price": 3920.0},
+    {"symbol": "INFY", "name": "Infosys Ltd.", "exchange": "NSE", "base_price": 1610.0},
+    {"symbol": "HDFCBANK", "name": "HDFC Bank Ltd.", "exchange": "NSE", "base_price": 1650.0},
+    {"symbol": "ICICIBANK", "name": "ICICI Bank Ltd.", "exchange": "NSE", "base_price": 1180.0},
+    {"symbol": "SBIN", "name": "State Bank of India", "exchange": "NSE", "base_price": 820.0},
+    {"symbol": "BHARTIARTL", "name": "Bharti Airtel Ltd.", "exchange": "NSE", "base_price": 1420.0},
+    {"symbol": "ITC", "name": "ITC Limited", "exchange": "NSE", "base_price": 490.0},
+    {"symbol": "KOTAKBANK", "name": "Kotak Mahindra Bank", "exchange": "NSE", "base_price": 1780.0},
+    {"symbol": "LT", "name": "Larsen & Toubro Ltd.", "exchange": "NSE", "base_price": 3650.0},
+    {"symbol": "AXISBANK", "name": "Axis Bank Ltd.", "exchange": "NSE", "base_price": 1160.0},
+    {"symbol": "ASIANPAINT", "name": "Asian Paints Ltd.", "exchange": "NSE", "base_price": 3250.0},
+    {"symbol": "MARUTI", "name": "Maruti Suzuki India", "exchange": "NSE", "base_price": 12400.0},
+    {"symbol": "TITAN", "name": "Titan Company Ltd.", "exchange": "NSE", "base_price": 3450.0},
+    {"symbol": "BAJFINANCE", "name": "Bajaj Finance Ltd.", "exchange": "NSE", "base_price": 6850.0},
+]
+
+INDIAN_INDICES = [
+    {"symbol": "NIFTY50", "name": "Nifty 50 Index", "exchange": "NSE", "base_price": 24800.0},
+    {"symbol": "BANKNIFTY", "name": "Nifty Bank Index", "exchange": "NSE", "base_price": 51200.0},
+    {"symbol": "SENSEX", "name": "BSE Sensex Index", "exchange": "BSE", "base_price": 81500.0},
+]
+
 
 class MockProvider(BaseMarketDataProvider):
-    """Deterministic Mock Market Data Provider for local dev and testing."""
+    """Deterministic Mock Market Data Provider for Indian Stocks (NSE/BSE)."""
 
     def __init__(self) -> None:
         super().__init__(provider_name="MOCK", rate_limit_per_minute=1000)
@@ -26,19 +50,33 @@ class MockProvider(BaseMarketDataProvider):
         self._seed_mock_data()
 
     def _seed_mock_data(self) -> None:
-        default_defs = [
-            ("AAPL", "NASDAQ", "Apple Inc.", "US0378331005", "EQUITY", 185.0),
-            ("MSFT", "NASDAQ", "Microsoft Corp.", "US5949181045", "EQUITY", 410.0),
-            ("GOOGL", "NASDAQ", "Alphabet Inc.", "US02079K3059", "EQUITY", 175.0),
-            ("TSLA", "NASDAQ", "Tesla Inc.", "US88160R1014", "EQUITY", 220.0),
-            ("SPY", "NYSE", "SPDR S&P 500 ETF", "US78462F1030", "ETF", 510.0),
-            ("BTC-USD", "CRYPTO", "Bitcoin USD", "BTC-USD-ISIN", "CRYPTO", 64000.0),
-            ("ETH-USD", "CRYPTO", "Ethereum USD", "ETH-USD-ISIN", "CRYPTO", 3400.0),
-        ]
-
         now = datetime.now(UTC)
 
-        for symbol, exchange, name, isin, itype, base_price in default_defs:
+        all_defs = []
+        for stock in INDIAN_STOCKS:
+            all_defs.append(
+                (
+                    stock["symbol"],
+                    stock["exchange"],
+                    stock["name"],
+                    f"INE{stock['symbol']}ISIN",
+                    "EQUITY",
+                    stock["base_price"],
+                )
+            )
+        for idx in INDIAN_INDICES:
+            all_defs.append(
+                (
+                    idx["symbol"],
+                    idx["exchange"],
+                    idx["name"],
+                    f"INDEX{idx['symbol']}ISIN",
+                    "INDEX",
+                    idx["base_price"],
+                )
+            )
+
+        for symbol, exchange, name, isin, itype, base_price in all_defs:
             inst_id = uuid.uuid5(uuid.NAMESPACE_DNS, f"mock:{symbol}")
             inst = NormalizedInstrument(
                 id=inst_id,
@@ -46,7 +84,7 @@ class MockProvider(BaseMarketDataProvider):
                 exchange_code=exchange,
                 name=name,
                 isin=isin,
-                currency="USD",
+                currency="INR",
                 instrument_type=itype,
                 provider_symbol=f"MOCK:{symbol}",
             )
@@ -54,14 +92,14 @@ class MockProvider(BaseMarketDataProvider):
 
             self._fundamentals[inst.id] = NormalizedFundamental(
                 instrument_id=inst.id,
-                market_cap=base_price * 15_000_000_000 if itype != "CRYPTO" else base_price * 19_000_000,
-                pe_ratio=28.5 if itype == "EQUITY" else None,
-                pb_ratio=8.2 if itype == "EQUITY" else None,
-                dividend_yield=0.012 if itype in ("EQUITY", "ETF") else None,
-                eps=base_price / 28.5 if itype == "EQUITY" else None,
-                beta=1.1,
-                high_52_week=base_price * 1.25,
-                low_52_week=base_price * 0.75,
+                market_cap=base_price * 100_000_000 if itype != "INDEX" else None,
+                pe_ratio=24.5 if itype == "EQUITY" else None,
+                pb_ratio=3.8 if itype == "EQUITY" else None,
+                dividend_yield=0.015 if itype == "EQUITY" else None,
+                eps=base_price / 24.5 if itype == "EQUITY" else None,
+                beta=1.05,
+                high_52_week=base_price * 1.2,
+                low_52_week=base_price * 0.8,
             )
 
             articles: list[NormalizedNewsArticle] = []
@@ -70,10 +108,10 @@ class MockProvider(BaseMarketDataProvider):
                     NormalizedNewsArticle(
                         id=uuid.uuid5(uuid.NAMESPACE_DNS, f"news:{symbol}:{i}"),
                         instrument_id=inst.id,
-                        source_name="Financial Times" if i % 2 == 0 else "Bloomberg",
-                        title=f"{symbol} quarterly performance analysis and market outlook #{i + 1}",
-                        summary=f"Analysis covering {name} ({symbol}) market movement and investor sentiment.",
-                        content=f"Detailed financial article body discussing key revenue drivers for {symbol}.",
+                        source_name="Economic Times" if i % 2 == 0 else "Moneycontrol",
+                        title=f"{symbol} quarterly earnings performance and Indian market outlook #{i + 1}",
+                        summary=f"Market analysis covering {name} ({symbol}) on NSE/BSE and sector trends.",
+                        content=f"Detailed financial analysis on revenue growth and margin trajectory for {symbol}.",
                         url=f"https://terminal.org/news/{symbol.lower()}-{i + 1}",
                         published_at=now - timedelta(days=i, hours=i * 2),
                     )
@@ -88,7 +126,7 @@ class MockProvider(BaseMarketDataProvider):
                 results.append(inst)
         return results
 
-    async def get_instrument_by_symbol(self, symbol: str, exchange_code: str = "US") -> NormalizedInstrument | None:
+    async def get_instrument_by_symbol(self, symbol: str, exchange_code: str = "NSE") -> NormalizedInstrument | None:
         return self._instruments.get(symbol.upper().strip())
 
     async def get_realtime_quote(self, instrument: NormalizedInstrument) -> NormalizedQuote:
@@ -96,8 +134,13 @@ class MockProvider(BaseMarketDataProvider):
             raise InstrumentNotFoundError(f"Instrument {instrument.symbol} not found")
 
         now = datetime.now(UTC)
-        base_price = 64000.0 if "BTC" in instrument.symbol else 3400.0 if "ETH" in instrument.symbol else 185.0
-        jitter = math.sin(now.timestamp() / 10.0) * (base_price * 0.005)
+        base_price = 2850.0
+        for stock in INDIAN_STOCKS + INDIAN_INDICES:
+            if stock["symbol"] == instrument.symbol:
+                base_price = stock["base_price"]
+                break
+
+        jitter = math.sin(now.timestamp() / 10.0) * (base_price * 0.003)
         last_price = round(base_price + jitter, 2)
         spread = round(last_price * 0.0005, 2)
 
@@ -122,7 +165,11 @@ class MockProvider(BaseMarketDataProvider):
         if instrument.symbol not in self._instruments:
             raise InstrumentNotFoundError(f"Instrument {instrument.symbol} not found")
 
-        base_price = 64000.0 if "BTC" in instrument.symbol else 3400.0 if "ETH" in instrument.symbol else 200.0
+        base_price = 2850.0
+        for stock in INDIAN_STOCKS + INDIAN_INDICES:
+            if stock["symbol"] == instrument.symbol:
+                base_price = stock["base_price"]
+                break
 
         step = timedelta(days=1) if interval == "1d" else timedelta(minutes=1)
         current = start_time
@@ -130,13 +177,13 @@ class MockProvider(BaseMarketDataProvider):
 
         step_idx = 0
         while current <= end_time:
-            drift = math.sin(step_idx / 20.0) * (base_price * 0.02)
-            noise = (math.cos(step_idx) * 0.005) * base_price
+            drift = math.sin(step_idx / 20.0) * (base_price * 0.015)
+            noise = (math.cos(step_idx) * 0.004) * base_price
             open_p = round(base_price + drift + noise, 2)
-            high_p = round(open_p * 1.01, 2)
-            low_p = round(open_p * 0.99, 2)
+            high_p = round(open_p * 1.008, 2)
+            low_p = round(open_p * 0.992, 2)
             close_p = round(open_p + (math.sin(step_idx) * 0.5), 2)
-            vol = round(10000.0 + (step_idx % 100) * 250, 2)
+            vol = round(25000.0 + (step_idx % 100) * 500, 2)
 
             candles.append(
                 NormalizedOHLCV(

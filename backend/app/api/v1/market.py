@@ -36,8 +36,8 @@ async def get_historical_ohlcv(
 async def get_market_overview(
     current_user: dict[str, Any] = Depends(get_current_user),
 ) -> dict[str, Any]:
-    """Fetch high-level market overview summary (indices, top gainers, losers)."""
-    indices = ["SPY", "AAPL", "MSFT", "GOOGL", "BTC-USD"]
+    """Fetch high-level market overview summary for Indian Market (NSE/BSE)."""
+    indices = ["NIFTY50", "BANKNIFTY", "SENSEX", "RELIANCE", "TCS"]
     quotes: list[dict[str, Any]] = []
 
     for sym in indices:
@@ -48,14 +48,16 @@ async def get_market_overview(
                 {
                     "symbol": inst.symbol,
                     "name": inst.name,
+                    "currency": inst.currency,
                     "last_price": q.last_price,
-                    "change_percent": 0.85 if "BTC" in sym else 0.35,
+                    "change_percent": 0.65 if "NIFTY" in sym else 0.42,
                 }
             )
 
     return {
         "status": "active",
         "market_status": "OPEN",
+        "market_region": "INDIA (NSE/BSE)",
         "indices": quotes,
         "gainers": quotes[:2],
         "losers": quotes[2:],
@@ -66,8 +68,8 @@ async def get_market_overview(
 async def get_default_watchlist(
     current_user: dict[str, Any] = Depends(get_current_user),
 ) -> list[dict[str, Any]]:
-    """Fetch user watchlist with live quotes."""
-    symbols = ["AAPL", "MSFT", "TSLA", "BTC-USD", "ETH-USD"]
+    """Fetch user watchlist with live quotes for Indian Market."""
+    symbols = ["RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK"]
     watchlist: list[dict[str, Any]] = []
 
     for sym in symbols:

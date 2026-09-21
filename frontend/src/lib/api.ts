@@ -62,28 +62,36 @@ export interface WorkspaceResponse {
 
 class ApiClient {
   private getHeaders(): HeadersInit {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('auth_token') || 'valid_token';
     return {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      Authorization: `Bearer ${token}`,
     };
   }
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        ...this.getHeaders(),
-        ...options?.headers,
-      },
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers: {
+          ...this.getHeaders(),
+          ...options?.headers,
+        },
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'Network request failed' }));
-      throw new Error(errorData.detail || `HTTP Error ${response.status}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Network request failed' }));
+        throw new Error(errorData.detail || `HTTP Error ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+        throw new Error(`Cannot connect to backend. Please ensure backend is running at ${API_BASE_URL}`);
+      }
+      throw err;
     }
-
-    return response.json();
   }
 
   // Workspaces Persisted CRUD

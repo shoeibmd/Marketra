@@ -10,7 +10,7 @@ interface MarketState {
 
 export const useMarketStore = create<MarketState>((set) => ({
   quotes: {},
-  activeSymbol: 'AAPL',
+  activeSymbol: 'RELIANCE',
   updateQuote: (quote) =>
     set((state) => ({
       quotes: {

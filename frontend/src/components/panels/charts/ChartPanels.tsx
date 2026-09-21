@@ -4,7 +4,7 @@ import { OHLCV } from '../../../types/market';
 import { PanelProps } from '../../../types/panel';
 import { Activity, BarChart2 } from 'lucide-react';
 
-export const OHLCChartPanel: React.FC<PanelProps> = ({ symbol = 'AAPL' }) => {
+export const OHLCChartPanel: React.FC<PanelProps> = ({ symbol = 'RELIANCE' }) => {
   const [candles, setCandles] = useState<OHLCV[]>([]);
   const [interval, setInterval] = useState('1d');
   const [loading, setLoading] = useState(false);
@@ -62,7 +62,7 @@ export const OHLCChartPanel: React.FC<PanelProps> = ({ symbol = 'AAPL' }) => {
                 className={`w-full rounded-t transition-all ${
                   isGreen ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-red-500 hover:bg-red-400'
                 }`}
-                title={`Close: $${c.close}`}
+                title={`Close: ₹${c.close}`}
               />
             </div>
           );
@@ -77,7 +77,7 @@ export const VolumePanel: React.FC<PanelProps> = () => {
     <div className="space-y-2 font-mono text-xs">
       <div className="flex items-center justify-between text-slate-400 border-b border-slate-800 pb-1">
         <span className="flex items-center gap-1"><BarChart2 className="h-3.5 w-3.5 text-emerald-400" /> Realtime Volume Histogram</span>
-        <span className="text-[10px] text-slate-500">AAPL</span>
+        <span className="text-[10px] text-slate-500">RELIANCE</span>
       </div>
       <div className="h-28 flex items-end space-x-1 bg-slate-950 border border-slate-800 p-2 rounded">
         {[40, 65, 30, 80, 95, 50, 70, 85, 45, 60, 90, 100].map((v, i) => (
@@ -139,16 +139,16 @@ export const VWAPPanel: React.FC<PanelProps> = () => {
     <div className="space-y-2 font-mono text-xs">
       <div className="flex items-center justify-between text-slate-400 border-b border-slate-800 pb-1">
         <span>Volume Weighted Average Price (VWAP)</span>
-        <span className="text-emerald-400 font-bold">$184.65</span>
+        <span className="text-emerald-400 font-bold">₹2845.50</span>
       </div>
       <div className="bg-slate-950 border border-slate-800 p-3 rounded space-y-1">
         <div className="flex justify-between text-slate-300">
           <span className="text-slate-500">Upper Band (+2 SD):</span>
-          <span>$186.20</span>
+          <span>₹2870.20</span>
         </div>
         <div className="flex justify-between text-slate-300">
           <span className="text-slate-500">Lower Band (-2 SD):</span>
-          <span>$183.10</span>
+          <span>₹2820.10</span>
         </div>
         <p className="text-[10px] text-slate-500 pt-1">Price currently trading above intraday VWAP baseline (institutional support).</p>
       </div>

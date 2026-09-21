@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1 import api_v1_router
+from app.api.websockets import ws_router
 from app.core.config import settings
 
 app = FastAPI(
@@ -19,6 +20,7 @@ app.add_middleware(
 )
 
 app.include_router(api_v1_router)
+app.include_router(ws_router)
 
 
 @app.get("/healthz", tags=["Health"])

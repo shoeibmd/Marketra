@@ -2,6 +2,23 @@ import { create } from 'zustand';
 import { api, WorkspaceResponse } from '../lib/api';
 import { WorkspacePanelItem } from '../components/workspace/WorkspaceGrid';
 
+const DEFAULT_PANELS: WorkspacePanelItem[] = [
+  {
+    id: 'panel_chart_1',
+    type: 'chart',
+    title: 'RELIANCE Technical Candlestick Chart',
+    symbol: 'RELIANCE',
+    layout: { i: 'panel_chart_1', x: 0, y: 0, w: 8, h: 3 },
+  },
+  {
+    id: 'panel_overview_1',
+    type: 'overview',
+    title: 'NIFTY50 & BSE Sensex Overview',
+    symbol: 'NIFTY50',
+    layout: { i: 'panel_overview_1', x: 8, y: 0, w: 4, h: 3 },
+  },
+];
+
 interface WorkspaceState {
   workspaces: WorkspaceResponse[];
   activeWorkspace: WorkspaceResponse | null;
@@ -18,7 +35,7 @@ interface WorkspaceState {
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   workspaces: [],
   activeWorkspace: null,
-  panels: [],
+  panels: DEFAULT_PANELS,
   isLoading: false,
   saveTimer: null,
 
@@ -28,26 +45,26 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       const list = await api.getWorkspaces();
       const active = list.find((w) => w.is_default) || list[0] || null;
 
-      const loadedPanels: WorkspacePanelItem[] = active
+      const loadedPanels: WorkspacePanelItem[] = active && active.layout_config && active.layout_config.length > 0
         ? active.layout_config.map((item, idx) => ({
             id: item.panelId || `p_${idx}`,
             type: item.panelType || 'chart',
             title: item.title || 'Panel',
-            symbol: item.symbol || 'AAPL',
+            symbol: item.symbol || 'RELIANCE',
             layout: {
               i: item.panelId || `p_${idx}`,
-              x: item.x || 0,
-              y: item.y || 0,
+              x: item.x !== undefined ? item.x : 0,
+              y: item.y !== undefined ? item.y : 0,
               w: item.w || 4,
               h: item.h || 2,
             },
           }))
-        : [];
+        : DEFAULT_PANELS;
 
       set({ workspaces: list, activeWorkspace: active, panels: loadedPanels, isLoading: false });
     } catch (err) {
-      console.error('Failed to load workspaces:', err);
-      set({ isLoading: false });
+      console.error('Failed to load workspaces, falling back to default:', err);
+      set({ panels: DEFAULT_PANELS, isLoading: false });
     }
   },
 
@@ -55,19 +72,21 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     set({ isLoading: true });
     try {
       const ws = await api.getWorkspace(id);
-      const loadedPanels: WorkspacePanelItem[] = ws.layout_config.map((item, idx) => ({
-        id: item.panelId || `p_${idx}`,
-        type: item.panelType || 'chart',
-        title: item.title || 'Panel',
-        symbol: item.symbol || 'AAPL',
-        layout: {
-          i: item.panelId || `p_${idx}`,
-          x: item.x || 0,
-          y: item.y || 0,
-          w: item.w || 4,
-          h: item.h || 2,
-        },
-      }));
+      const loadedPanels: WorkspacePanelItem[] = ws.layout_config && ws.layout_config.length > 0
+        ? ws.layout_config.map((item, idx) => ({
+            id: item.panelId || `p_${idx}`,
+            type: item.panelType || 'chart',
+            title: item.title || 'Panel',
+            symbol: item.symbol || 'RELIANCE',
+            layout: {
+              i: item.panelId || `p_${idx}`,
+              x: item.x !== undefined ? item.x : 0,
+              y: item.y !== undefined ? item.y : 0,
+              w: item.w || 4,
+              h: item.h || 2,
+            },
+          }))
+        : DEFAULT_PANELS;
 
       set({ activeWorkspace: ws, panels: loadedPanels, isLoading: false });
     } catch (err) {
@@ -78,7 +97,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
 
   createNewWorkspace: async (name: string) => {
     try {
-      const newWs = await api.createWorkspace(name, 'Custom user workspace', []);
+      const newWs = await api.createWorkspace(name, 'Custom Indian Market Workspace', []);
       await get().fetchWorkspaces();
       await get().selectWorkspace(newWs.id);
     } catch (err) {

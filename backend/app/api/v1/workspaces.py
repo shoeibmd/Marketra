@@ -32,15 +32,15 @@ async def list_user_workspaces(
         def_ws = Workspace(
             id=uuid.uuid4(),
             user_id=user_id,
-            name="Macro Overview Workspace",
-            description="Default system workspace",
+            name="Indian Market Overview",
+            description="Default NSE/BSE system workspace",
             is_default=True,
             layout_config=[
                 {
                     "panelId": "panel_chart_1",
                     "panelType": "chart",
-                    "title": "AAPL Technical Chart",
-                    "symbol": "AAPL",
+                    "title": "RELIANCE Technical Chart",
+                    "symbol": "RELIANCE",
                     "x": 0,
                     "y": 0,
                     "w": 8,
@@ -49,8 +49,8 @@ async def list_user_workspaces(
                 {
                     "panelId": "panel_overview_1",
                     "panelType": "overview",
-                    "title": "Global Market Overview",
-                    "symbol": "SPY",
+                    "title": "NIFTY50 Overview",
+                    "symbol": "NIFTY50",
                     "x": 8,
                     "y": 0,
                     "w": 4,

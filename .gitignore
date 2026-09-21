@@ -57,3 +57,6 @@ node_modules/
 .idea/
 .vscode/
 *.swp
+
+frontend/node_modules/
+backend/.venv/

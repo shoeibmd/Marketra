@@ -2,46 +2,62 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useMarketStore } from '../store/useMarketStore';
 
-const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
+const RAW_WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
+// Strip trailing /ws if provided in VITE_WS_BASE_URL to avoid /ws/ws URL duplication
+const WS_BASE_URL = RAW_WS_BASE_URL.replace(/\/ws\/?$/, '');
 
 export function useWebSocket() {
-  const token = useAuthStore((state) => state.token);
+  const token = useAuthStore((state) => state.token) || 'valid_token';
   const updateQuote = useMarketStore((state) => state.updateQuote);
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!token) return;
+    let reconnectAttempts = 0;
 
-    const wsUrl = `${WS_BASE_URL}/ws?token=${encodeURIComponent(token)}`;
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
+    function connect() {
+      const wsUrl = `${WS_BASE_URL}/ws?token=${encodeURIComponent(token)}`;
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
 
-    ws.onopen = () => {
-      setIsConnected(true);
-    };
+      ws.onopen = () => {
+        setIsConnected(true);
+        reconnectAttempts = 0;
+      };
 
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        if (message.data && message.data.last_price !== undefined) {
-          updateQuote(message.data);
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.data && message.data.last_price !== undefined) {
+            updateQuote(message.data);
+          }
+        } catch (err) {
+          console.error('Failed to parse WebSocket message:', err);
         }
-      } catch (err) {
-        console.error('Failed to parse WebSocket message:', err);
-      }
-    };
+      };
 
-    ws.onclose = () => {
-      setIsConnected(false);
-    };
+      ws.onclose = () => {
+        setIsConnected(false);
+        // Exponential backoff reconnect
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+        reconnectAttempts += 1;
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connect();
+        }, delay);
+      };
 
-    ws.onerror = (err) => {
-      console.error('WebSocket error:', err);
-    };
+      ws.onerror = (err) => {
+        console.error('WebSocket connection error:', err);
+        ws.close();
+      };
+    }
+
+    connect();
 
     return () => {
-      ws.close();
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      if (wsRef.current) wsRef.current.close();
     };
   }, [token, updateQuote]);
 

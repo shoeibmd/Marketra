@@ -1,6 +1,5 @@
 import uuid
 from collections.abc import AsyncGenerator
-
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
@@ -20,7 +19,9 @@ async def async_session() -> AsyncGenerator[AsyncSession, None]:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    session_factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    session_factory = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     async with session_factory() as session:
         yield session
 
@@ -35,13 +36,11 @@ async def test_workspace_crud_and_isolation(async_session: AsyncSession) -> None
     app.dependency_overrides[get_postgres_db] = _override_get_db
     client = TestClient(app)
 
-    token = create_access_token(
-        {
-            "sub": "trader@terminal.org",
-            "user_id": "11111111-1111-1111-1111-111111111111",
-            "role": "USER",
-        }
-    )
+    token = create_access_token({
+        "sub": "trader@terminal.org",
+        "user_id": "11111111-1111-1111-1111-111111111111",
+        "role": "USER",
+    })
     headers = {"Authorization": f"Bearer {token}"}
 
     # 1. List user workspaces (auto-creates default)
@@ -54,14 +53,16 @@ async def test_workspace_crud_and_isolation(async_session: AsyncSession) -> None
     # 2. Get single workspace
     res_single = client.get(f"/api/v1/workspaces/{def_ws_id}", headers=headers)
     assert res_single.status_code == 200
-    assert res_single.json()["name"] == "Macro Overview Workspace"
+    assert res_single.json()["name"] == "Indian Market Overview"
 
     # 3. Create new workspace
     new_ws_payload = {
         "name": "Crypto Analysis",
         "description": "Bitcoin & Altcoin focus",
         "is_default": False,
-        "layout_config": [{"panelId": "p1", "panelType": "chart", "symbol": "BTC-USD", "x": 0, "y": 0, "w": 6, "h": 3}],
+        "layout_config": [
+            {"panelId": "p1", "panelType": "chart", "symbol": "BTC-USD", "x": 0, "y": 0, "w": 6, "h": 3}
+        ],
     }
     res_create = client.post("/api/v1/workspaces", json=new_ws_payload, headers=headers)
     assert res_create.status_code == 200
