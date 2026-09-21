@@ -14,20 +14,25 @@ interface AuthState {
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  token: localStorage.getItem('auth_token') || 'valid_token',
-  user: {
-    id: 'user_123',
-    email: 'trader@terminal.org',
-    full_name: 'Alpha Trader',
-  },
-  isAuthenticated: true,
-  login: (token, user) => {
-    localStorage.setItem('auth_token', token);
-    set({ token, user, isAuthenticated: true });
-  },
-  logout: () => {
-    localStorage.removeItem('auth_token');
-    set({ token: null, user: null, isAuthenticated: false });
-  },
-}));
+export const useAuthStore = create<AuthState>((set) => {
+  const savedToken = localStorage.getItem('auth_token');
+  return {
+    token: savedToken,
+    user: savedToken
+      ? {
+          id: '11111111-1111-1111-1111-111111111111',
+          email: 'trader@terminal.org',
+          full_name: 'Alpha Trader',
+        }
+      : null,
+    isAuthenticated: !!savedToken,
+    login: (token, user) => {
+      localStorage.setItem('auth_token', token);
+      set({ token, user, isAuthenticated: true });
+    },
+    logout: () => {
+      localStorage.removeItem('auth_token');
+      set({ token: null, user: null, isAuthenticated: false });
+    },
+  };
+});

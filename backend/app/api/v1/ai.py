@@ -5,6 +5,7 @@ from typing import Any
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.auth.auth_service import get_current_user
 from app.db.session import get_postgres_db
 from app.models.domain import AIDocument, AIDocumentChunk
 from app.schemas.ai import (
@@ -20,7 +21,10 @@ _MOCK_QUERY_HISTORY: list[dict[str, Any]] = []
 
 
 @router.post("/query", response_model=AIResponse)
-async def execute_rag_query(req: RAGQueryRequest) -> AIResponse:
+async def execute_rag_query(
+    req: RAGQueryRequest,
+    current_user: dict[str, Any] = Depends(get_current_user),
+) -> AIResponse:
     """Execute RAG query against indexed documents and return structured response with citations."""
     res = await rag_pipeline.run_query(req.query, req.instrument_id)
     _MOCK_QUERY_HISTORY.append(
@@ -35,19 +39,27 @@ async def execute_rag_query(req: RAGQueryRequest) -> AIResponse:
 
 
 @router.post("/summarize/company/{symbol}", response_model=AIResponse)
-async def summarize_company(symbol: str) -> AIResponse:
+async def summarize_company(
+    symbol: str,
+    current_user: dict[str, Any] = Depends(get_current_user),
+) -> AIResponse:
     """Generate AI company summary for an instrument."""
     return await rag_pipeline.run_query(f"Summarize financial performance and business model of {symbol}", symbol)
 
 
 @router.post("/summarize/news", response_model=AIResponse)
-async def summarize_news(symbol: str = "AAPL") -> AIResponse:
+async def summarize_news(
+    symbol: str = "AAPL",
+    current_user: dict[str, Any] = Depends(get_current_user),
+) -> AIResponse:
     """Generate AI news summary for an instrument."""
     return await rag_pipeline.run_query(f"Summarize recent news coverage and market sentiment for {symbol}", symbol)
 
 
 @router.get("/queries", response_model=list[dict[str, Any]])
-async def get_query_history() -> list[dict[str, Any]]:
+async def get_query_history(
+    current_user: dict[str, Any] = Depends(get_current_user),
+) -> list[dict[str, Any]]:
     """Fetch user's AI query history."""
     return _MOCK_QUERY_HISTORY
 
@@ -56,6 +68,7 @@ async def get_query_history() -> list[dict[str, Any]]:
 async def upload_rag_document(
     req: AIDocumentUploadRequest,
     db: AsyncSession = Depends(get_postgres_db),
+    current_user: dict[str, Any] = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Upload and chunk document for RAG indexing."""
     inst_uuid = uuid.UUID(req.instrument_id) if req.instrument_id else None

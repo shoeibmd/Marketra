@@ -1,0 +1,19 @@
+FROM node:22-alpine AS dev
+
+WORKDIR /app
+
+# Enable corepack for pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copy package descriptors first
+COPY package.json pnpm-lock.yaml ./
+
+# Install dependencies cleanly inside the container
+RUN pnpm install --frozen-lockfile
+
+# Copy remaining source files (node_modules is excluded by .dockerignore)
+COPY . .
+
+EXPOSE 3000
+
+CMD ["pnpm", "dev", "--host"]
