@@ -58,3 +58,7 @@ async def get_timescale_db() -> AsyncGenerator[AsyncSession, None]:
             yield session
         finally:
             await session.close()
+
+
+# Alias for general relational database dependency
+get_db = get_postgres_db

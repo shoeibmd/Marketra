@@ -4,6 +4,8 @@ from typing import Any
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth.jwt_handler import (
     blacklist_token,
@@ -16,6 +18,8 @@ from app.core.auth.password import (
     validate_password_complexity,
     verify_password,
 )
+from app.db.session import get_db
+from app.models.domain import User
 from app.schemas.auth import (
     PasswordChangeRequest,
     TokenRefreshRequest,
@@ -28,33 +32,31 @@ from app.schemas.auth import (
 router = APIRouter(prefix="/auth", tags=["Auth"])
 security = HTTPBearer()
 
-_USERS_DB: dict[str, dict[str, Any]] = {
-    "trader@terminal.org": {
-        "id": "11111111-1111-1111-1111-111111111111",
-        "email": "trader@terminal.org",
-        "hashed_password": hash_password("Secret123"),
-        "full_name": "Alpha Trader",
-        "is_active": True,
-        "is_superuser": False,
-        "role": "USER",
-    }
-}
-
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> dict[str, Any]:
-    """Dependency: Extract and validate JWT token from Bearer header."""
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """Dependency: Extract and validate JWT token from Bearer header and query PostgreSQL."""
     token = credentials.credentials
     try:
         payload = decode_token(token)
         email = payload.get("sub")
-        if not email or email not in _USERS_DB:
+        if not email:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token claims",
             )
-        return _USERS_DB[email]
+        stmt = select(User).where(User.email == str(email))
+        res = await db.execute(stmt)
+        user = res.scalar_one_or_none()
+
+        if not user or not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found or inactive",
+            )
+        return user
     except jwt.PyJWTError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -63,9 +65,16 @@ async def get_current_user(
 
 
 @router.post("/register", response_model=UserProfileResponse)
-async def register(req: UserRegisterRequest) -> UserProfileResponse:
-    """Register a new user."""
-    if req.email in _USERS_DB:
+async def register(
+    req: UserRegisterRequest,
+    db: AsyncSession = Depends(get_db),
+) -> UserProfileResponse:
+    """Register a new user in PostgreSQL database."""
+    stmt = select(User).where(User.email == str(req.email))
+    res = await db.execute(stmt)
+    existing_user = res.scalar_one_or_none()
+
+    if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered",
@@ -78,46 +87,57 @@ async def register(req: UserRegisterRequest) -> UserProfileResponse:
             detail=err_msg,
         )
 
-    user_id = str(uuid.uuid4())
-    user = {
-        "id": user_id,
-        "email": str(req.email),
-        "hashed_password": hash_password(req.password),
-        "full_name": req.full_name,
-        "is_active": True,
-        "is_superuser": False,
-        "role": "USER",
-    }
-    _USERS_DB[req.email] = user
-    return UserProfileResponse(
-        id=user_id,
-        email=req.email,
+    user = User(
+        id=uuid.uuid4(),
+        email=str(req.email),
+        hashed_password=hash_password(req.password),
         full_name=req.full_name,
+        role="user",
         is_active=True,
         is_superuser=False,
-        role="USER",
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    return UserProfileResponse(
+        id=str(user.id),
+        email=user.email,
+        full_name=user.full_name,
+        is_active=user.is_active,
+        is_superuser=user.is_superuser,
+        role=user.role,
     )
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(req: UserLoginRequest) -> TokenResponse:
-    """Authenticate email/password and return JWT token pair."""
-    user = _USERS_DB.get(req.email)
-    if not user or not verify_password(req.password, str(user["hashed_password"])):
+async def login(
+    req: UserLoginRequest,
+    db: AsyncSession = Depends(get_db),
+) -> TokenResponse:
+    """Authenticate email/password against PostgreSQL database and return JWT token pair."""
+    stmt = select(User).where(User.email == str(req.email))
+    res = await db.execute(stmt)
+    user = res.scalar_one_or_none()
+
+    if not user or not verify_password(req.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
         )
 
-    claims = {"sub": str(user["email"]), "user_id": str(user["id"]), "role": str(user["role"])}
+    claims = {"sub": user.email, "user_id": str(user.id), "role": user.role}
     access_token = create_access_token(claims)
-    refresh_token = create_refresh_token({"sub": str(user["email"]), "user_id": str(user["id"])})
+    refresh_token = create_refresh_token({"sub": user.email, "user_id": str(user.id)})
 
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh(req: TokenRefreshRequest) -> TokenResponse:
+async def refresh(
+    req: TokenRefreshRequest,
+    db: AsyncSession = Depends(get_db),
+) -> TokenResponse:
     """Refresh access token using valid refresh token."""
     try:
         payload = decode_token(req.refresh_token)
@@ -125,13 +145,19 @@ async def refresh(req: TokenRefreshRequest) -> TokenResponse:
             raise HTTPException(status_code=400, detail="Invalid token type")
 
         email = payload.get("sub")
-        user = _USERS_DB.get(email) if email else None
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
+        if not email:
+            raise HTTPException(status_code=401, detail="Invalid token subject")
 
-        claims = {"sub": str(user["email"]), "user_id": str(user["id"]), "role": str(user["role"])}
+        stmt = select(User).where(User.email == str(email))
+        res = await db.execute(stmt)
+        user = res.scalar_one_or_none()
+
+        if not user or not user.is_active:
+            raise HTTPException(status_code=401, detail="User not found or inactive")
+
+        claims = {"sub": user.email, "user_id": str(user.id), "role": user.role}
         new_access = create_access_token(claims)
-        new_refresh = create_refresh_token({"sub": str(user["email"]), "user_id": str(user["id"])})
+        new_refresh = create_refresh_token({"sub": user.email, "user_id": str(user.id)})
 
         return TokenResponse(access_token=new_access, refresh_token=new_refresh)
     except jwt.PyJWTError as e:
@@ -149,31 +175,35 @@ async def logout(
 
 @router.get("/me", response_model=UserProfileResponse)
 async def get_me(
-    current_user: dict[str, Any] = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> UserProfileResponse:
     """Get profile details for authenticated user."""
     return UserProfileResponse(
-        id=str(current_user["id"]),
-        email=str(current_user["email"]),
-        full_name=current_user.get("full_name"),
-        is_active=bool(current_user["is_active"]),
-        is_superuser=bool(current_user["is_superuser"]),
-        role=str(current_user.get("role", "USER")),
+        id=str(current_user.id),
+        email=current_user.email,
+        full_name=current_user.full_name,
+        is_active=current_user.is_active,
+        is_superuser=current_user.is_superuser,
+        role=current_user.role,
     )
 
 
 @router.put("/password")
 async def change_password(
     req: PasswordChangeRequest,
-    current_user: dict[str, Any] = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     """Change authenticated user password."""
-    if not verify_password(req.old_password, str(current_user["hashed_password"])):
+    if not verify_password(req.old_password, current_user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect current password")
 
     valid, err_msg = validate_password_complexity(req.new_password)
     if not valid:
         raise HTTPException(status_code=400, detail=err_msg)
 
-    current_user["hashed_password"] = hash_password(req.new_password)
+    current_user.hashed_password = hash_password(req.new_password)
+    db.add(current_user)
+    await db.commit()
+
     return {"message": "Password updated successfully"}

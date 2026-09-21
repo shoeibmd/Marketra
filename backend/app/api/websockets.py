@@ -3,8 +3,10 @@ import json
 import logging
 from typing import Any
 
+import jwt
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 
+from app.core.auth.jwt_handler import decode_token
 from app.services.providers.mock import MockProvider
 
 logger = logging.getLogger("terminal.websockets")
@@ -47,12 +49,21 @@ manager = WebSocketConnectionManager()
 @ws_router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
-    token: str = Query("valid_token"),
+    token: str = Query(...),
 ) -> None:
-    """WebSocket endpoint for streaming realtime quotes (Indian Market NSE/BSE)."""
+    """WebSocket endpoint for streaming realtime quotes (validates real JWT token)."""
+    try:
+        payload = decode_token(token)
+        email = payload.get("sub")
+        if not email:
+            await websocket.close(code=4001, reason="Invalid token claims")
+            return
+    except jwt.PyJWTError:
+        await websocket.close(code=4001, reason="Invalid or expired authentication token")
+        return
+
     await manager.connect(websocket)
 
-    # Start background loop streaming simulated realtime tick updates for Indian stocks
     symbols = ["RELIANCE", "TCS", "INFY", "NIFTY50"]
     streaming_task = asyncio.create_task(_stream_realtime_ticks(websocket, symbols))
 
@@ -64,10 +75,10 @@ async def websocket_endpoint(
                 action = msg.get("action")
                 channel = msg.get("channel")
                 if action == "subscribe" and channel:
-                    logger.info(f"Client subscribed to channel: {channel}")
+                    logger.info(f"Client {email} subscribed to channel: {channel}")
                     await websocket.send_json({"status": "subscribed", "channel": channel})
                 elif action == "unsubscribe" and channel:
-                    logger.info(f"Client unsubscribed from channel: {channel}")
+                    logger.info(f"Client {email} unsubscribed from channel: {channel}")
                     await websocket.send_json({"status": "unsubscribed", "channel": channel})
             except json.JSONDecodeError:
                 await websocket.send_json({"error": "Invalid JSON payload"})
@@ -76,7 +87,7 @@ async def websocket_endpoint(
         manager.disconnect(websocket)
         streaming_task.cancel()
     except Exception as e:
-        logger.error(f"WebSocket session error: {e}")
+        logger.error(f"WebSocket session error for {email}: {e}")
         manager.disconnect(websocket)
         streaming_task.cancel()
 

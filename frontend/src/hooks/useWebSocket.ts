@@ -7,13 +7,18 @@ const RAW_WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000
 const WS_BASE_URL = RAW_WS_BASE_URL.replace(/\/ws\/?$/, '');
 
 export function useWebSocket() {
-  const token = useAuthStore((state) => state.token) || 'valid_token';
+  const token = useAuthStore((state) => state.token);
   const updateQuote = useMarketStore((state) => state.updateQuote);
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    if (!token) {
+      setIsConnected(false);
+      return;
+    }
+
     let reconnectAttempts = 0;
 
     function connect() {

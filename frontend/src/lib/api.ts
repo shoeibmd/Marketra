@@ -62,11 +62,14 @@ export interface WorkspaceResponse {
 
 class ApiClient {
   private getHeaders(): HeadersInit {
-    const token = localStorage.getItem('auth_token') || 'valid_token';
-    return {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
     };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
   }
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -92,6 +95,25 @@ class ApiClient {
       }
       throw err;
     }
+  }
+
+  // Auth
+  async login(email: string, password: string): Promise<{ access_token: string; refresh_token: string }> {
+    return this.request<{ access_token: string; refresh_token: string }>('/api/v1/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+  }
+
+  async register(email: string, password: string, fullName?: string): Promise<{ id: string; email: string; role: string }> {
+    return this.request<{ id: string; email: string; role: string }>('/api/v1/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, full_name: fullName }),
+    });
+  }
+
+  async getMe(): Promise<{ id: string; email: string; full_name?: string; role: string }> {
+    return this.request<{ id: string; email: string; full_name?: string; role: string }>('/api/v1/auth/me');
   }
 
   // Workspaces Persisted CRUD

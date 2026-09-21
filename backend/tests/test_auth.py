@@ -65,7 +65,12 @@ def test_auth_api_register_and_login() -> None:
     assert res_me.status_code == 200
     assert res_me.json()["email"] == "newuser@terminal.org"
 
-    # 4. Logout
+    # 4. Access protected market overview route with token
+    res_market = client.get("/api/v1/market/overview", headers=headers)
+    assert res_market.status_code == 200
+    assert "indices" in res_market.json()
+
+    # 5. Logout
     res_out = client.post("/api/v1/auth/logout", headers=headers)
     assert res_out.status_code == 200
 

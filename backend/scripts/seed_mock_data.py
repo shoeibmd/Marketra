@@ -31,6 +31,7 @@ async def seed_database() -> None:
                 email="admin@marketra.com",
                 hashed_password=hash_password("Password123!"),
                 full_name="Admin User",
+                role="admin",
                 is_active=True,
                 is_superuser=True,
             )
