@@ -34,6 +34,7 @@ import {
   AINewsSummaryPanel,
   AIResearchAssistantPanel,
 } from './components/panels/ai/AIPanels';
+import { SystemStatusPanel } from './components/panels/admin/SystemStatusPanel';
 
 export function registerDefaultPanels() {
   // Phase 11 - Market Panels
@@ -157,6 +158,17 @@ export function registerDefaultPanels() {
     defaultWidth: 4,
     defaultHeight: 2,
     component: NewsSearchPanel,
+  });
+
+  // Phase 7 - Admin / System Status Panel
+  panelRegistry.register({
+    type: 'system_status',
+    title: 'System Health & Compliance',
+    description: 'Free/Open-source compliance audit and feed telemetry',
+    category: 'Admin',
+    defaultWidth: 4,
+    defaultHeight: 3,
+    component: SystemStatusPanel,
   });
 
   // Phase 14 - Fundamental Panels

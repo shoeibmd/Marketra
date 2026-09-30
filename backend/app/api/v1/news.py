@@ -9,8 +9,9 @@ from app.core.auth.auth_service import get_current_user
 from app.db.session import get_db
 from app.models.domain import ArticleInstrument, Instrument, NewsArticle, User
 from app.services.ai.mock import MockAIProvider
-from app.services.providers.mock import MockProvider
+from app.services.news.health import health_tracker
 from app.services.news.rss import RSSNewsProvider
+from app.services.providers.mock import MockProvider
 
 router = APIRouter(prefix="/news", tags=["News"])
 rss_provider = RSSNewsProvider()
@@ -120,6 +121,15 @@ async def _format_article(
         "market_context": market_context,
         "related_market_contexts": related_contexts,
     }
+
+
+@router.get("/status", response_model=dict[str, Any])
+async def get_news_system_status(
+    current_user: User = Depends(get_current_user),
+) -> dict[str, Any]:
+    """Phase 7: System & Free/Open-Source Health Monitoring Endpoint."""
+    report = health_tracker.get_health_report()
+    return report.model_dump()
 
 
 @router.get("", response_model=list[dict[str, Any]])
