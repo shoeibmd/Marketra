@@ -84,6 +84,7 @@ class Instrument(Base):
     isin: Mapped[str | None] = mapped_column(String(12), unique=True, index=True, nullable=True)
     currency: Mapped[str] = mapped_column(String(10), default="INR", nullable=False)
     instrument_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    sector: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
@@ -159,7 +160,7 @@ class Fundamental(Base):
     high_52_week: Mapped[float | None] = mapped_column(Float, nullable=True)
     low_52_week: Mapped[float | None] = mapped_column(Float, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+        DateTime(timezone=True), default_utc_now, onupdate=utc_now, nullable=False
     )
 
 
@@ -190,6 +191,28 @@ class NewsArticle(Base):
     raw_metadata: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True, unique=True)
     processing_status: Mapped[str] = mapped_column(String(30), default="raw", nullable=False, index=True)
+
+
+class ArticleInstrument(Base):
+    """Junction table supporting one news article affecting multiple instruments/companies."""
+
+    __tablename__ = "article_instruments"
+
+    article_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("news_articles.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    )
+    instrument_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("instruments.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    )
+    relevance_score: Mapped[float] = mapped_column(Float, default=1.0, nullable=False)
+    sector: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 
 class AIDocument(Base):

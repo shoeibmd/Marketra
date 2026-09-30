@@ -1,29 +1,50 @@
+from datetime datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth.auth_service import get_current_user
 from app.db.session import get_db
-from app.models.domain import NewsArticle, User
-from app.schemas.market_data import NormalizedNewsArticle
+from app.models.domain import ArticleInstrument, Instrument, NewsArticle, User
 from app.services.news.rss import RSSNewsProvider
 
 router = APIRouter(prefix="/news", tags=["News"])
 rss_provider = RSSNewsProvider()
 
 
+def _format_article(article: NewsArticle, matching_symbols: list[str] | None = None) -> dict[str, Any]:
+    return {
+        "id": str(article.id),
+        "title": article.title,
+        "summary": article.summary,
+        "content": article.content,
+        "source_name": article.source_name,
+        "source_url": article.source_url,
+        "url": article.url,
+        "published_at": article.published_at.isoformat(),
+        "discovered_at": article.discovered_at.isoformat(),
+        "company": article.company,
+        "symbol": article.symbol,
+        "exchange": article.exchange,
+        "category": article.category,
+        "content_hash": article.content_hash,
+        "processing_status": article.processing_status,
+        "associated_symbols": matching_symbols or ([article.symbol] if article.symbol else []),
+    }
+
+
 @router.get("", response_model=list[dict[str, Any]])
 async def get_news_articles(
     symbol: str | None = Query(None, description="Filter news by instrument symbol"),
-    category: str | None = Query(None, description="Filter news by category (e.g. monetary_policy, corporate_earnings)"),
+    category: str | None = Query(None, description="Filter news by category"),
     exchange: str | None = Query(None, description="Filter news by exchange (NSE, BSE)"),
     limit: int = Query(10, ge=1, le=50),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[dict[str, Any]]:
-    """Fetch live Indian market news articles from database with optional filters."""
+    """Legacy Endpoint: Fetch live Indian market news articles."""
     query = select(NewsArticle)
 
     if symbol:
@@ -38,28 +59,9 @@ async def get_news_articles(
     articles = res.scalars().all()
 
     if articles:
-        return [
-            {
-                "id": str(a.id),
-                "title": a.title,
-                "summary": a.summary,
-                "content": a.content,
-                "source_name": a.source_name,
-                "source_url": a.source_url,
-                "url": a.url,
-                "published_at": a.published_at.isoformat(),
-                "discovered_at": a.discovered_at.isoformat(),
-                "company": a.company,
-                "symbol": a.symbol,
-                "exchange": a.exchange,
-                "category": a.category,
-                "content_hash": a.content_hash,
-                "processing_status": a.processing_status,
-            }
-            for a in articles
-        ]
+        return [_format_article(a) for a in articles]
 
-    # Fallback to provider sample items if DB is empty
+    # Provider sample fallback
     live_items = await rss_provider.fetch_news()
     filtered = live_items
     if symbol:
@@ -86,9 +88,133 @@ async def get_news_articles(
             "category": i.category,
             "content_hash": i.content_hash,
             "processing_status": i.processing_status,
+            "associated_symbols": [i.symbol] if i.symbol else [],
         }
         for i in filtered[:limit]
     ]
+
+
+@router.get("/live", response_model=dict[str, Any])
+async def get_live_news_feed(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=50),
+    category: str | None = Query(None),
+    exchange: str | None = Query(None),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Phase 2: Paginated Live Stream News Feed."""
+    offset = (page - 1) * page_size
+    query = select(NewsArticle)
+
+    if category:
+        query = query.where(NewsArticle.category == category.lower().strip())
+    if exchange:
+        query = query.where(NewsArticle.exchange == exchange.upper().strip())
+
+    query = query.order_by(NewsArticle.published_at.desc()).offset(offset).limit(page_size)
+    res = await db.execute(query)
+    articles = res.scalars().all()
+
+    items = [_format_article(a) for a in articles]
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total_returned": len(items),
+        "items": items,
+    }
+
+
+@router.get("/search", response_model=dict[str, Any])
+async def search_news(
+    q: str | None = Query(None, description="Keyword search query"),
+    company: str | None = Query(None, description="Company name query"),
+    symbol: str | None = Query(None, description="Instrument symbol query"),
+    sector: str | None = Query(None, description="Industry sector filter"),
+    category: str | None = Query(None, description="News category filter"),
+    date_from: datetime | None = Query(None, description="Filter articles published after date"),
+    date_to: datetime | None = Query(None, description="Filter articles published before date"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=50),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Phase 2: Full-featured Server-Side News Search & Multi-Company Filtering with Pagination."""
+    offset = (page - 1) * page_size
+    query = select(NewsArticle)
+
+    if symbol:
+        sym_clean = symbol.upper().strip()
+        subq = select(ArticleInstrument.article_id).join(Instrument).where(Instrument.symbol == sym_clean)
+        query = query.where(or_(NewsArticle.symbol == sym_clean, NewsArticle.id.in_(subq)))
+
+    if sector:
+        sec_clean = sector.lower().strip()
+        subq_sec = select(ArticleInstrument.article_id).where(ArticleInstrument.sector.ilike(f"%{sec_clean}%"))
+        query = query.where(NewsArticle.id.in_(subq_sec))
+
+    if company:
+        comp_clean = f"%{company.strip()}%"
+        query = query.where(NewsArticle.company.ilike(comp_clean))
+
+    if q:
+        kw = f"%{q.strip()}%"
+        query = query.where(or_(NewsArticle.title.ilike(kw), NewsArticle.summary.ilike(kw)))
+
+    if category:
+        query = query.where(NewsArticle.category == category.lower().strip())
+
+    if date_from:
+        query = query.where(NewsArticle.published_at >= date_from)
+
+    if date_to:
+        query = query.where(NewsArticle.published_at <= date_to)
+
+    query = query.order_by(NewsArticle.published_at.desc()).offset(offset).limit(page_size)
+    res = await db.execute(query)
+    articles = res.scalars().all()
+
+    items = [_format_article(a) for a in articles]
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total_returned": len(items),
+        "items": items,
+    }
+
+
+@router.get("/company/{symbol}", response_model=dict[str, Any])
+async def get_company_news(
+    symbol: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=50),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Phase 2: Fetch company news mapped via primary or multi-company junction associations."""
+    sym_clean = symbol.upper().strip()
+    offset = (page - 1) * page_size
+
+    subq = select(ArticleInstrument.article_id).join(Instrument).where(Instrument.symbol == sym_clean)
+    query = (
+        select(NewsArticle)
+        .where(or_(NewsArticle.symbol == sym_clean, NewsArticle.id.in_(subq)))
+        .order_by(NewsArticle.published_at.desc())
+        .offset(offset)
+        .limit(page_size)
+    )
+
+    res = await db.execute(query)
+    articles = res.scalars().all()
+
+    items = [_format_article(a) for a in articles]
+    return {
+        "symbol": sym_clean,
+        "page": page,
+        "page_size": page_size,
+        "total_returned": len(items),
+        "items": items,
+    }
 
 
 @router.get("/{article_id}", response_model=dict[str, Any])
@@ -97,29 +223,21 @@ async def get_single_news_article(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Fetch a single news article by ID."""
+    """Fetch a single news article by ID with multi-company mapping symbols."""
     stmt = select(NewsArticle).where(NewsArticle.id == article_id)
     res = await db.execute(stmt)
     article = res.scalar_one_or_none()
 
     if article:
-        return {
-            "id": str(article.id),
-            "title": article.title,
-            "summary": article.summary,
-            "content": article.content,
-            "source_name": article.source_name,
-            "source_url": article.source_url,
-            "url": article.url,
-            "published_at": article.published_at.isoformat(),
-            "discovered_at": article.discovered_at.isoformat(),
-            "company": article.company,
-            "symbol": article.symbol,
-            "exchange": article.exchange,
-            "category": article.category,
-            "content_hash": article.content_hash,
-            "processing_status": article.processing_status,
-        }
+        junc_stmt = (
+            select(Instrument.symbol)
+            .join(ArticleInstrument)
+            .where(ArticleInstrument.article_id == article.id)
+        )
+        junc_res = await db.execute(junc_stmt)
+        associated_syms = list(junc_res.scalars().all())
+
+        return _format_article(article, matching_symbols=associated_syms)
 
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,

@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.db.session import PostgresSessionLocal
-from app.models.domain import Instrument, NewsArticle
+from app.models.domain import ArticleInstrument, Instrument, NewsArticle
+from app.services.news.matcher import CompanyMatcher
 from app.services.news.rss import RSSNewsProvider
 
 logger = logging.getLogger("terminal.celery.tasks")
@@ -59,17 +60,19 @@ async def _ingest_news_async() -> tuple[int, int]:
                 skipped += 1
                 continue
 
-            inst_id = None
-            if item.symbol:
-                inst_stmt = select(Instrument).where(Instrument.symbol == item.symbol)
-                inst_res = await session.execute(inst_stmt)
-                inst = inst_res.scalar_one_or_none()
-                if inst:
-                    inst_id = inst.id
+            # Multi-company entity matching
+            matches = await CompanyMatcher.match_instruments(
+                title=item.title,
+                content=item.summary or item.content,
+                db_session=session,
+                hint_symbol=item.symbol,
+            )
+
+            primary_inst_id = matches[0][0] if matches else None
 
             article = NewsArticle(
                 id=item.id,
-                instrument_id=inst_id,
+                instrument_id=primary_inst_id,
                 title=item.title,
                 summary=item.summary,
                 content=item.content,
@@ -87,6 +90,16 @@ async def _ingest_news_async() -> tuple[int, int]:
                 processing_status="normalized",
             )
             session.add(article)
+
+            for inst_id, sym, sector, score in matches:
+                junction = ArticleInstrument(
+                    article_id=article.id,
+                    instrument_id=inst_id,
+                    relevance_score=score,
+                    sector=sector,
+                )
+                session.add(junction)
+
             inserted += 1
 
         await session.commit()
