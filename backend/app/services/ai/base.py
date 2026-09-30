@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.schemas.ai import AIResponse
+from app.schemas.ai import AIResponse, NewsAIAnalysis
 
 
 class AIProviderError(Exception):
@@ -30,6 +30,18 @@ class BaseAIProvider(ABC):
     @abstractmethod
     async def generate_completion(self, prompt: str, context: str) -> AIResponse:
         """Generate structured completion with citations."""
+        pass
+
+    @abstractmethod
+    async def generate_news_analysis(
+        self,
+        title: str,
+        content: str | None,
+        company: str | None = None,
+        symbol: str | None = None,
+        source: str | None = None,
+    ) -> NewsAIAnalysis:
+        """Generate structured news intelligence analysis."""
         pass
 
     @abstractmethod

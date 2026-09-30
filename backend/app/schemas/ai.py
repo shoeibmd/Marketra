@@ -20,6 +20,25 @@ class AIResponse(BaseModel):
     interpretation: list[str] = Field(default_factory=list)
 
 
+class NewsAIAnalysis(BaseModel):
+    """Structured AI Analysis for Live News Intelligence."""
+
+    what_happened: str
+    primary_company_affected: str
+    related_companies: list[str] = Field(default_factory=list)
+    event_category: str
+    importance_reason: str
+    source_facts: list[str] = Field(default_factory=list)
+    potential_impact: Literal["POSITIVE", "NEGATIVE", "MIXED", "NEUTRAL", "UNCLEAR"]
+    importance_level: Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+    ai_confidence: float = Field(..., ge=0.0, le=1.0)
+    user_monitoring_checklist: list[str] = Field(default_factory=list)
+    related_sector: str
+    related_announcements: list[str] = Field(default_factory=list)
+    uncertainties_or_gaps: list[str] = Field(default_factory=list)
+    model_used: str = "mock-financial-rag-v1"
+
+
 class RAGQueryRequest(BaseModel):
     query: str = Field(..., min_length=2)
     instrument_id: str | None = None

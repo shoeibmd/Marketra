@@ -35,7 +35,7 @@ class User(Base):
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+        DateTime(timezone=True), default_utc_now, onupdate=utc_now, nullable=False
     )
 
 
@@ -160,7 +160,7 @@ class Fundamental(Base):
     high_52_week: Mapped[float | None] = mapped_column(Float, nullable=True)
     low_52_week: Mapped[float | None] = mapped_column(Float, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default_utc_now, onupdate=utc_now, nullable=False
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
     )
 
 
@@ -191,6 +191,12 @@ class NewsArticle(Base):
     raw_metadata: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True, unique=True)
     processing_status: Mapped[str] = mapped_column(String(30), default="raw", nullable=False, index=True)
+
+    # AI Intelligence Fields
+    ai_status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False, index=True)
+    ai_importance: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
+    ai_impact: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
+    ai_analysis_json: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
 
 class ArticleInstrument(Base):
