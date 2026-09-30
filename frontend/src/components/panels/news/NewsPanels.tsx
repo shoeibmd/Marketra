@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../../lib/api';
 import { NewsArticle } from '../../../types/market';
 import { PanelProps } from '../../../types/panel';
-import { Newspaper, ExternalLink, Search, X, Sparkles, Building2 } from 'lucide-react';
+import { Newspaper, ExternalLink, Search, X, Sparkles, Building2, TrendingUp, TrendingDown, Info } from 'lucide-react';
 
 const CATEGORIES = [
   'ALL',
@@ -115,6 +115,7 @@ export const LiveMarketNewsPanel: React.FC<PanelProps> = () => {
             const isHigh = art.ai_importance === 'HIGH' || art.ai_importance === 'CRITICAL';
             const companyName = art.company || art.symbol || 'INDIAN LISTED ENTITY';
             const catLabel = (art.category || 'general').replace('_', ' ').toUpperCase();
+            const mc = art.market_context;
 
             return (
               <div
@@ -143,6 +144,20 @@ export const LiveMarketNewsPanel: React.FC<PanelProps> = () => {
                   </div>
                   <span className="text-slate-500">{getTimeAgo(art.published_at)}</span>
                 </div>
+
+                {/* Market Correlation Context Badge */}
+                {mc && (
+                  <div className="flex items-center justify-between p-1.5 bg-slate-900/80 border border-slate-800 rounded text-[10px]">
+                    <div className="flex items-center space-x-2 font-bold">
+                      <span className="text-slate-200">{mc.symbol}: ₹{mc.current_price.toLocaleString()}</span>
+                      <span className={`flex items-center ${mc.change_percent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {mc.change_percent >= 0 ? <TrendingUp className="h-3 w-3 mr-0.5" /> : <TrendingDown className="h-3 w-3 mr-0.5" />}
+                        {mc.change_percent >= 0 ? '+' : ''}{mc.change_percent}%
+                      </span>
+                    </div>
+                    <span className="text-slate-500">Vol: {mc.volume.toLocaleString()}</span>
+                  </div>
+                )}
 
                 {/* Title / Headline */}
                 <h4 className="font-bold text-slate-100 text-xs leading-snug">{art.title}</h4>
@@ -276,6 +291,7 @@ interface DetailModalProps {
 
 const NewsDetailModal: React.FC<DetailModalProps> = ({ article, onClose }) => {
   const ai = article.ai_analysis;
+  const mc = article.market_context;
   const relatedCompanies = ai?.related_companies?.length ? ai.related_companies : article.associated_symbols || [];
   const categoryFormatted = (article.category || 'general').replace('_', ' ').toUpperCase();
 
@@ -308,6 +324,44 @@ const NewsDetailModal: React.FC<DetailModalProps> = ({ article, onClose }) => {
 
         {/* Modal Body */}
         <div className="p-4 overflow-y-auto space-y-4 flex-1">
+          {/* Correlated Market Data Box */}
+          {mc && (
+            <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg space-y-2">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5 text-xs font-bold text-slate-200">
+                <span className="flex items-center space-x-1.5 text-emerald-400">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Market Context ({mc.symbol})</span>
+                </span>
+                <span className="text-[10px] text-slate-500 font-normal">Sector: {mc.sector}</span>
+              </div>
+              <div className="grid grid-cols-4 gap-2 text-[11px] text-slate-300 pt-1">
+                <div>
+                  <span className="text-slate-500 block text-[10px]">CURRENT PRICE</span>
+                  <strong className="text-slate-100 font-bold">₹{mc.current_price.toLocaleString()}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">PREV CLOSE</span>
+                  <span>₹{mc.previous_close.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">CHANGE</span>
+                  <strong className={mc.change_percent >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                    {mc.change_percent >= 0 ? '+' : ''}{mc.change_percent}%
+                  </strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">VOLUME</span>
+                  <span>{mc.volume.toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-1.5 text-[10px] text-slate-500 pt-1 border-t border-slate-900">
+                <Info className="h-3 w-3 text-slate-600 flex-shrink-0 mt-0.5" />
+                <p>{mc.market_relevance_note}</p>
+              </div>
+            </div>
+          )}
+
           {/* AI Intelligence Card */}
           {ai && (
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg space-y-3">
@@ -355,7 +409,7 @@ const NewsDetailModal: React.FC<DetailModalProps> = ({ article, onClose }) => {
                 </div>
                 <div>
                   <strong className="text-slate-400 block text-[10px]">RELATED SECTOR:</strong>
-                  <span className="text-slate-300 mt-1 block">{ai.related_sector || 'General Equity'}</span>
+                  <span className="text-slate-300 mt-1 block">{ai.related_sector || mc?.sector || 'General Equity'}</span>
                 </div>
               </div>
 

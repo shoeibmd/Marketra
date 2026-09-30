@@ -43,6 +43,20 @@ export interface Fundamental {
   low_52_week?: number;
 }
 
+export interface MarketContextData {
+  symbol: string;
+  company_name: string;
+  currency: string;
+  current_price: number;
+  previous_close: number;
+  change_percent: number;
+  volume: number;
+  sector: string;
+  market_relevance_note: string;
+  high_52_week?: number;
+  low_52_week?: number;
+}
+
 export interface NewsAIAnalysisData {
   what_happened: string;
   primary_company_affected: string;
@@ -80,6 +94,8 @@ export interface NewsArticle {
   ai_importance?: string;
   ai_impact?: string;
   ai_analysis?: NewsAIAnalysisData;
+  market_context?: MarketContextData;
+  related_market_contexts?: MarketContextData[];
 }
 
 export interface Position {
