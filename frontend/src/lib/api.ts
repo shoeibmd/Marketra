@@ -60,6 +60,13 @@ export interface WorkspaceResponse {
   updated_at: string;
 }
 
+export interface NewsPaginatedResponse {
+  page: number;
+  page_size: number;
+  total_returned: number;
+  items: NewsArticle[];
+}
+
 class ApiClient {
   private getHeaders(): HeadersInit {
     const token = localStorage.getItem('auth_token');
@@ -179,6 +186,30 @@ class ApiClient {
   async getNews(symbol?: string, limit = 10): Promise<NewsArticle[]> {
     const url = symbol ? `/api/v1/news?symbol=${symbol}&limit=${limit}` : `/api/v1/news?limit=${limit}`;
     return this.request<NewsArticle[]>(url);
+  }
+
+  async getLiveNews(page = 1, pageSize = 10, category?: string): Promise<NewsPaginatedResponse> {
+    const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+    if (category && category !== 'ALL') {
+      params.append('category', category.toLowerCase());
+    }
+    return this.request<NewsPaginatedResponse>(`/api/v1/news/live?${params.toString()}`);
+  }
+
+  async searchNews(
+    query?: string,
+    category?: string,
+    page = 1,
+    pageSize = 10
+  ): Promise<NewsPaginatedResponse> {
+    const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+    if (query) params.append('q', query);
+    if (category && category !== 'ALL') params.append('category', category.toLowerCase());
+    return this.request<NewsPaginatedResponse>(`/api/v1/news/search?${params.toString()}`);
+  }
+
+  async getNewsArticleDetail(id: string): Promise<NewsArticle> {
+    return this.request<NewsArticle>(`/api/v1/news/${id}`);
   }
 
   // Portfolio

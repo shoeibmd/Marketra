@@ -15,6 +15,16 @@ router = APIRouter(prefix="/news", tags=["News"])
 rss_provider = RSSNewsProvider()
 ai_provider = MockAIProvider()
 
+CATEGORY_MAPPINGS = {
+    "results": ["corporate_earnings", "results", "earnings"],
+    "corporate": ["corporate_actions", "corporate_earnings", "corporate", "business_update"],
+    "acquisition": ["acquisition", "merger", "business_update"],
+    "investment": ["investment", "expansion", "business_update"],
+    "dividend": ["corporate_actions", "dividend"],
+    "regulatory": ["regulation", "regulator", "monetary_policy", "central_bank"],
+    "market": ["general", "market_index", "macro"],
+}
+
 
 def _format_article(article: NewsArticle, matching_symbols: list[str] | None = None) -> dict[str, Any]:
     analysis = article.ai_analysis_json
@@ -22,7 +32,7 @@ def _format_article(article: NewsArticle, matching_symbols: list[str] | None = N
         analysis = {
             "what_happened": article.title,
             "primary_company_affected": article.company or article.symbol or "Listed Entity",
-            "related_companies": [],
+            "related_companies": matching_symbols or [],
             "event_category": article.category,
             "importance_reason": "Automated market disclosure analysis.",
             "source_facts": [f"Source: {article.source_name}", f"Headline: {article.title}"],
@@ -31,7 +41,7 @@ def _format_article(article: NewsArticle, matching_symbols: list[str] | None = N
             "ai_confidence": 0.90,
             "user_monitoring_checklist": ["Monitor upcoming NSE/BSE filings."],
             "related_sector": "Equity Market",
-            "related_announcements": [],
+            "related_announcements": [f"Previous disclosures for {article.company or article.symbol or 'Entity'}"],
             "uncertainties_or_gaps": ["NOT AVAILABLE FROM SOURCE: Specific financial guidance was omitted."],
             "model_used": "mock-financial-rag-v1",
         }
@@ -54,8 +64,8 @@ def _format_article(article: NewsArticle, matching_symbols: list[str] | None = N
         "processing_status": article.processing_status,
         "associated_symbols": matching_symbols or ([article.symbol] if article.symbol else []),
         "ai_status": article.ai_status or "pending",
-        "ai_importance": article.ai_importance,
-        "ai_impact": article.ai_impact,
+        "ai_importance": article.ai_importance or "MEDIUM",
+        "ai_impact": article.ai_impact or "NEUTRAL",
         "ai_analysis": analysis,
     }
 
@@ -75,7 +85,9 @@ async def get_news_articles(
     if symbol:
         query = query.where(NewsArticle.symbol == symbol.upper().strip())
     if category:
-        query = query.where(NewsArticle.category == category.lower().strip())
+        cat_key = category.lower().strip()
+        cat_targets = CATEGORY_MAPPINGS.get(cat_key, [cat_key])
+        query = query.where(NewsArticle.category.in_(cat_targets))
     if exchange:
         query = query.where(NewsArticle.exchange == exchange.upper().strip())
 
@@ -92,7 +104,9 @@ async def get_news_articles(
     if symbol:
         filtered = [i for i in filtered if i.symbol == symbol.upper().strip()]
     if category:
-        filtered = [i for i in filtered if i.category == category.lower().strip()]
+        cat_key = category.lower().strip()
+        cat_targets = CATEGORY_MAPPINGS.get(cat_key, [cat_key])
+        filtered = [i for i in filtered if i.category in cat_targets]
     if exchange:
         filtered = [i for i in filtered if i.exchange == exchange.upper().strip()]
 
@@ -140,7 +154,10 @@ async def get_live_news_feed(
     query = select(NewsArticle)
 
     if category:
-        query = query.where(NewsArticle.category == category.lower().strip())
+        cat_key = category.lower().strip()
+        cat_targets = CATEGORY_MAPPINGS.get(cat_key, [cat_key])
+        query = query.where(NewsArticle.category.in_(cat_targets))
+
     if exchange:
         query = query.where(NewsArticle.exchange == exchange.upper().strip())
 
@@ -194,7 +211,9 @@ async def search_news(
         query = query.where(or_(NewsArticle.title.ilike(kw), NewsArticle.summary.ilike(kw)))
 
     if category:
-        query = query.where(NewsArticle.category == category.lower().strip())
+        cat_key = category.lower().strip()
+        cat_targets = CATEGORY_MAPPINGS.get(cat_key, [cat_key])
+        query = query.where(NewsArticle.category.in_(cat_targets))
 
     if date_from:
         query = query.where(NewsArticle.published_at >= date_from)

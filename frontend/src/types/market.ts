@@ -43,15 +43,43 @@ export interface Fundamental {
   low_52_week?: number;
 }
 
+export interface NewsAIAnalysisData {
+  what_happened: string;
+  primary_company_affected: string;
+  related_companies: string[];
+  event_category: string;
+  importance_reason: string;
+  source_facts: string[];
+  potential_impact: 'POSITIVE' | 'NEGATIVE' | 'MIXED' | 'NEUTRAL' | 'UNCLEAR';
+  importance_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  ai_confidence: number;
+  user_monitoring_checklist: string[];
+  related_sector: string;
+  related_announcements: string[];
+  uncertainties_or_gaps: string[];
+  model_used: string;
+}
+
 export interface NewsArticle {
   id: string;
   instrument_id?: string;
   source_name: string;
+  source_url?: string;
   title: string;
   summary?: string;
   content?: string;
   url: string;
   published_at: string;
+  discovered_at?: string;
+  company?: string;
+  symbol?: string;
+  exchange?: string;
+  category?: string;
+  associated_symbols?: string[];
+  ai_status?: string;
+  ai_importance?: string;
+  ai_impact?: string;
+  ai_analysis?: NewsAIAnalysisData;
 }
 
 export interface Position {
