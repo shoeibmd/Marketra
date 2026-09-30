@@ -176,8 +176,20 @@ class NewsArticle(Base):
     title: Mapped[str] = mapped_column(String(512), nullable=False)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     content: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source_name: Mapped[str] = mapped_column(String(100), default="Unknown Source", nullable=False)
+    source_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     url: Mapped[str] = mapped_column(String(1024), nullable=False)
     published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    discovered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+    # Intelligence & Normalization Fields
+    company: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    symbol: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
+    exchange: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
+    category: Mapped[str] = mapped_column(String(50), default="general", nullable=False, index=True)
+    raw_metadata: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True, unique=True)
+    processing_status: Mapped[str] = mapped_column(String(30), default="raw", nullable=False, index=True)
 
 
 class AIDocument(Base):

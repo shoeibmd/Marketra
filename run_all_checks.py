@@ -19,12 +19,10 @@ print(res_mypy.stderr)
 print("4. Running frontend build...")
 res_build = subprocess.run(["pnpm", "build"], cwd="frontend", capture_output=True, text=True)
 print(res_build.stdout)
-print(res_build.stderr)
 
 print("5. Running frontend lint...")
 res_lint = subprocess.run(["pnpm", "lint"], cwd="frontend", capture_output=True, text=True)
 print(res_lint.stdout)
-print(res_lint.stderr)
 
 if (
     res_pytest.returncode != 0
