@@ -17,7 +17,7 @@ MAX_WEBSOCKET_CONNECTIONS = 100
 
 
 class WebSocketConnectionManager:
-    """Manages active WebSocket client connections, quote/news broadcasting, and stale cleanup."""
+    """Manages active WebSocket client connections, quote/news/event broadcasting, and stale cleanup."""
 
     def __init__(self, max_connections: int = MAX_WEBSOCKET_CONNECTIONS) -> None:
         self.active_connections: list[WebSocket] = []
@@ -59,6 +59,14 @@ class WebSocketConnectionManager:
         }
         await self.broadcast(payload)
 
+    async def broadcast_financial_event(self, event_data: dict[str, Any]) -> None:
+        """Phase 10: Broadcast real-time financial_event to all connected clients."""
+        payload = {
+            "type": "financial_event",
+            "data": event_data,
+        }
+        await self.broadcast(payload)
+
 
 manager = WebSocketConnectionManager()
 
@@ -68,7 +76,7 @@ async def websocket_endpoint(
     websocket: WebSocket,
     token: str = Query(...),
 ) -> None:
-    """Production Hardened WebSocket endpoint for quote streaming & news alerts (validates JWT token & handles heartbeat)."""
+    """Production Hardened WebSocket endpoint for quote streaming, news alerts & financial events."""
     try:
         payload = decode_token(token)
         email = payload.get("sub")

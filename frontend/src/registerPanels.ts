@@ -35,6 +35,11 @@ import {
   AIResearchAssistantPanel,
 } from './components/panels/ai/AIPanels';
 import { SystemStatusPanel } from './components/panels/admin/SystemStatusPanel';
+import {
+  CompanyTimelinePanel,
+  EventIntelligencePanel,
+  RelatedCompaniesPanel,
+} from './components/panels/events/EventPanels';
 
 export function registerDefaultPanels() {
   // Phase 11 - Market Panels
@@ -158,6 +163,37 @@ export function registerDefaultPanels() {
     defaultWidth: 4,
     defaultHeight: 2,
     component: NewsSearchPanel,
+  });
+
+  // Phase 10 - Financial Event Intelligence Panels
+  panelRegistry.register({
+    type: 'event_intelligence',
+    title: 'Financial Event Feed',
+    description: 'Structured financial event extraction and fact analysis',
+    category: 'News',
+    defaultWidth: 6,
+    defaultHeight: 3,
+    component: EventIntelligencePanel,
+  });
+
+  panelRegistry.register({
+    type: 'company_timeline',
+    title: 'Company Event Timeline',
+    description: 'Historical event disclosure chronology',
+    category: 'News',
+    defaultWidth: 4,
+    defaultHeight: 3,
+    component: CompanyTimelinePanel,
+  });
+
+  panelRegistry.register({
+    type: 'related_companies',
+    title: 'Evidenced Network',
+    description: 'Co-mentioned and role-mapped company network',
+    category: 'News',
+    defaultWidth: 4,
+    defaultHeight: 3,
+    component: RelatedCompaniesPanel,
   });
 
   // Phase 7 - Admin / System Status Panel

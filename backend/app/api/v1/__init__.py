@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1.ai import router as ai_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.events import router as events_router
 from app.api.v1.fundamentals import router as fundamentals_router
 from app.api.v1.health import router as health_router
 from app.api.v1.instruments import router as instruments_router
@@ -16,6 +17,7 @@ api_v1_router.include_router(instruments_router)
 api_v1_router.include_router(market_router)
 api_v1_router.include_router(fundamentals_router)
 api_v1_router.include_router(news_router)
+api_v1_router.include_router(events_router)
 api_v1_router.include_router(portfolio_router)
 api_v1_router.include_router(workspaces_router)
 api_v1_router.include_router(ai_router)

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.schemas.ai import AIResponse, NewsAIAnalysis
+from app.schemas.ai import AIResponse, NewsAIAnalysis, StructuredFinancialEvent
 
 
 class AIProviderError(Exception):
@@ -42,6 +42,17 @@ class BaseAIProvider(ABC):
         source: str | None = None,
     ) -> NewsAIAnalysis:
         """Generate structured news intelligence analysis."""
+        pass
+
+    @abstractmethod
+    async def extract_financial_event(
+        self,
+        title: str,
+        content: str | None,
+        company: str | None = None,
+        symbol: str | None = None,
+    ) -> StructuredFinancialEvent:
+        """Phase 10: Extract structured financial event and company role mappings."""
         pass
 
     @abstractmethod

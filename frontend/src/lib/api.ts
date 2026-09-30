@@ -67,6 +67,35 @@ export interface NewsPaginatedResponse {
   items: NewsArticle[];
 }
 
+export interface FinancialEventItem {
+  id: string;
+  news_id?: string;
+  cluster_id?: string;
+  event_type: string;
+  event_title: string;
+  event_summary: string;
+  event_date: string;
+  detected_at: string;
+  primary_company_id?: string;
+  sector: string;
+  importance: string;
+  confidence: number;
+  source_name: string;
+  source_url?: string;
+  verified_facts: Record<string, any>;
+  ai_analysis: Record<string, any>;
+  potential_impact: string;
+  uncertainties: Record<string, any>;
+  company_roles: Array<{ symbol: string; company_name: string; role: string; note?: string }>;
+}
+
+export interface EventsPaginatedResponse {
+  page: number;
+  page_size: number;
+  total_returned: number;
+  items: FinancialEventItem[];
+}
+
 class ApiClient {
   private getHeaders(): HeadersInit {
     const token = localStorage.getItem('auth_token');
@@ -210,6 +239,22 @@ class ApiClient {
 
   async getNewsArticleDetail(id: string): Promise<NewsArticle> {
     return this.request<NewsArticle>(`/api/v1/news/${id}`);
+  }
+
+  // Phase 10: Financial Events & Intelligence
+  async getEvents(page = 1, pageSize = 10, eventType?: string, importance?: string): Promise<EventsPaginatedResponse> {
+    const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+    if (eventType) params.append('event_type', eventType);
+    if (importance) params.append('importance', importance);
+    return this.request<EventsPaginatedResponse>(`/api/v1/events?${params.toString()}`);
+  }
+
+  async getCompanyTimeline(symbol: string): Promise<{ symbol: string; total_events: number; timeline: Array<{ id: string; date: string; event_type: string; title: string; importance: string; summary: string }> }> {
+    return this.request<{ symbol: string; total_events: number; timeline: Array<{ id: string; date: string; event_type: string; title: string; importance: string; summary: string }> }>(`/api/v1/events/company/${symbol}/timeline`);
+  }
+
+  async getCompanyRelationships(symbol: string): Promise<{ symbol: string; related_companies: Array<{ symbol: string; company_name: string; role: string; note: string }> }> {
+    return this.request<{ symbol: string; related_companies: Array<{ symbol: string; company_name: string; role: string; note: string }> }>(`/api/v1/events/company/${symbol}/relationships`);
   }
 
   // Portfolio

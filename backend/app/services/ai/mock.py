@@ -1,7 +1,8 @@
+import hashlib
 import math
 import uuid
 
-from app.schemas.ai import AIResponse, Citation, NewsAIAnalysis
+from app.schemas.ai import AIResponse, Citation, CompanyRoleMapping, NewsAIAnalysis, StructuredFinancialEvent
 from app.services.ai.base import BaseAIProvider
 
 
@@ -75,6 +76,57 @@ class MockAIProvider(BaseAIProvider):
                 "NOT AVAILABLE FROM SOURCE: Specific long-term financial guidance was not disclosed in the press release."
             ],
             model_used=self.model_name,
+        )
+
+    async def extract_financial_event(
+        self,
+        title: str,
+        content: str | None,
+        company: str | None = None,
+        symbol: str | None = None,
+    ) -> StructuredFinancialEvent:
+        comp_name = company or symbol or "Reliance Industries Ltd"
+        sym = symbol or "RELIANCE"
+
+        t_upper = title.upper()
+        event_type = "OTHER"
+        if "RESULTS" in t_upper or "EARNINGS" in t_upper:
+            event_type = "RESULTS"
+        elif "ACQUISITION" in t_upper or "BUY" in t_upper:
+            event_type = "ACQUISITION"
+        elif "DIVIDEND" in t_upper:
+            event_type = "DIVIDEND"
+        elif "PARTNERSHIP" in t_upper or "CONTRACT" in t_upper:
+            event_type = "PARTNERSHIP"
+        elif "REGULATORY" in t_upper or "FRAMEWORK" in t_upper:
+            event_type = "REGULATORY_ACTION"
+
+        cluster_hash = hashlib.sha256(f"{event_type}|{sym}".encode("utf-8")).hexdigest()[:16]
+
+        roles = [
+            CompanyRoleMapping(
+                company_name=comp_name,
+                symbol=sym,
+                role="PRIMARY_SUBJECT",
+                relationship_note="Primary reporting entity",
+            )
+        ]
+
+        return StructuredFinancialEvent(
+            event_type=event_type,  # type: ignore[arg-type]
+            event_title=title,
+            event_summary=content or title,
+            primary_company=comp_name,
+            primary_symbol=sym,
+            company_roles=roles,
+            sector="Conglomerate / Energy" if sym == "RELIANCE" else "Information Technology",
+            importance="HIGH" if event_type in ["RESULTS", "ACQUISITION"] else "MEDIUM",
+            confidence=0.92,
+            verified_facts=[f"Official filing title: {title}"],
+            ai_analysis_text=f"Corporate event '{event_type}' detected for {comp_name} ({sym}).",
+            potential_impact="POSITIVE" if event_type == "DIVIDEND" else "NEUTRAL",
+            uncertainties=["NOT AVAILABLE FROM SOURCE: Specific future guidance omitted."],
+            cluster_id=f"cluster_{cluster_hash}",
         )
 
     async def generate_embedding(self, text: str) -> list[float]:

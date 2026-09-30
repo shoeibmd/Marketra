@@ -35,7 +35,7 @@ class User(Base):
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default_utc_now, onupdate=utc_now, nullable=False
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
     )
 
 
@@ -218,6 +218,71 @@ class ArticleInstrument(Base):
     )
     relevance_score: Mapped[float] = mapped_column(Float, default=1.0, nullable=False)
     sector: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class FinancialEvent(Base):
+    """Phase 10: Structured Financial Event model."""
+
+    __tablename__ = "financial_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    news_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("news_articles.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    cluster_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    event_type: Mapped[str] = mapped_column(String(50), default="OTHER", nullable=False, index=True)
+    event_title: Mapped[str] = mapped_column(String(512), nullable=False)
+    event_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    event_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    detected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+    primary_company_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("instruments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    sector: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    importance: Mapped[str] = mapped_column(String(20), default="MEDIUM", nullable=False, index=True)
+    confidence: Mapped[float] = mapped_column(Float, default=0.90, nullable=False)
+
+    source_name: Mapped[str] = mapped_column(String(100), default="Exchange Disclosure", nullable=False)
+    source_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+
+    verified_facts: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    ai_analysis_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    potential_impact: Mapped[str] = mapped_column(String(20), default="NEUTRAL", nullable=False)
+    uncertainties: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
+
+
+class EventCompanyRelationship(Base):
+    """Phase 10: Role classification mapping companies to financial events."""
+
+    __tablename__ = "event_company_relationships"
+
+    event_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("financial_events.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    )
+    instrument_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("instruments.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    )
+    role: Mapped[str] = mapped_column(String(30), default="PRIMARY_SUBJECT", nullable=False, index=True)
+    relationship_note: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 
