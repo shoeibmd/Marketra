@@ -1,13 +1,14 @@
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
 
 class Citation(BaseModel):
-    source_type: Literal["news_article", "filing", "financial_statement", "quote"]
+    source_type: Literal["news_article", "filing", "financial_statement", "quote", "financial_event"]
     source_id: str
     snippet: str
     relevance_score: float = Field(..., ge=0.0, le=1.0)
+    url: str | None = None
 
 
 class AIResponse(BaseModel):
@@ -116,6 +117,57 @@ class StructuredFinancialEvent(BaseModel):
     potential_impact: Literal["POSITIVE", "NEGATIVE", "MIXED", "NEUTRAL", "UNCLEAR"] = "NEUTRAL"
     uncertainties: list[str] = Field(default_factory=list)
     cluster_id: str | None = None
+
+
+# Phase 11: AI Research Assistant Schemas
+class ResearchSessionContext(BaseModel):
+    company: str | None = None
+    symbol: str | None = None
+    sector: str | None = None
+    event_type: str | None = None
+    date_range: str | None = None
+    last_query: str | None = None
+
+
+class ResearchQueryParsed(BaseModel):
+    intent: Literal[
+        "COMPANY_RESEARCH",
+        "EVENT_SEARCH",
+        "SECTOR_RESEARCH",
+        "NEWS_SUMMARY",
+        "EVENT_SUMMARY",
+        "COMPANY_TIMELINE",
+        "COMPANY_RELATIONSHIPS",
+        "MARKET_CONTEXT",
+        "MULTI_COMPANY_RESEARCH",
+        "SOURCE_LOOKUP",
+    ] = "COMPANY_RESEARCH"
+    company: str | None = None
+    symbol: str | None = None
+    sector: str | None = None
+    event_type: str | None = None
+    keyword: str | None = None
+    date_range_days: int = 30
+    importance: str | None = None
+
+
+class SourceGroundedAnswer(BaseModel):
+    answer_summary: str
+    key_facts: list[str] = Field(default_factory=list)
+    recent_events: list[dict[str, Any]] = Field(default_factory=list)
+    ai_analysis: str
+    potential_impact: str
+    uncertainties: list[str] = Field(default_factory=list)
+    sources: list[dict[str, Any]] = Field(default_factory=list)
+    related_companies: list[dict[str, Any]] = Field(default_factory=list)
+    market_context: dict[str, Any] | None = None
+    evidence_confidence: Literal["HIGH", "MEDIUM", "LOW"] = "HIGH"
+    context_used: ResearchSessionContext = Field(default_factory=ResearchSessionContext)
+
+
+class ResearchRequest(BaseModel):
+    query: str = Field(..., min_length=2)
+    context: ResearchSessionContext | None = None
 
 
 class RAGQueryRequest(BaseModel):

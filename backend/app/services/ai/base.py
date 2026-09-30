@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
-from app.schemas.ai import AIResponse, NewsAIAnalysis, StructuredFinancialEvent
+from app.schemas.ai import AIResponse, NewsAIAnalysis, SourceGroundedAnswer, StructuredFinancialEvent
 
 
 class AIProviderError(Exception):
@@ -53,6 +54,15 @@ class BaseAIProvider(ABC):
         symbol: str | None = None,
     ) -> StructuredFinancialEvent:
         """Phase 10: Extract structured financial event and company role mappings."""
+        pass
+
+    @abstractmethod
+    async def generate_source_grounded_research(
+        self,
+        query: str,
+        evidence: dict[str, Any],
+    ) -> SourceGroundedAnswer:
+        """Phase 11: Generate source-grounded research answer based strictly on retrieved evidence."""
         pass
 
     @abstractmethod

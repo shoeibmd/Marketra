@@ -96,6 +96,20 @@ export interface EventsPaginatedResponse {
   items: FinancialEventItem[];
 }
 
+export interface SourceGroundedResearchAnswer {
+  answer_summary: string;
+  key_facts: string[];
+  recent_events: Array<{ id: string; type: string; title: string; summary: string; date: string; importance: string; source: string; url?: string }>;
+  ai_analysis: string;
+  potential_impact: string;
+  uncertainties: string[];
+  sources: Array<{ id: string; type: string; title: string; source: string; url?: string }>;
+  related_companies: Array<{ symbol: string; name: string; role: string }>;
+  market_context?: { symbol: string; company_name: string; current_price: number; change_percent: number; volume: number; sector: string };
+  evidence_confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  context_used: { company?: string; symbol?: string; sector?: string; event_type?: string; date_range?: string; last_query?: string };
+}
+
 class ApiClient {
   private getHeaders(): HeadersInit {
     const token = localStorage.getItem('auth_token');
@@ -255,6 +269,14 @@ class ApiClient {
 
   async getCompanyRelationships(symbol: string): Promise<{ symbol: string; related_companies: Array<{ symbol: string; company_name: string; role: string; note: string }> }> {
     return this.request<{ symbol: string; related_companies: Array<{ symbol: string; company_name: string; role: string; note: string }> }>(`/api/v1/events/company/${symbol}/relationships`);
+  }
+
+  // Phase 11: AI Research Assistant
+  async executeResearchQuery(query: string, context?: Record<string, any>): Promise<SourceGroundedAnswer> {
+    return this.request<SourceGroundedAnswer>('/api/v1/ai/research', {
+      method: 'POST',
+      body: JSON.stringify({ query, context }),
+    });
   }
 
   // Portfolio
