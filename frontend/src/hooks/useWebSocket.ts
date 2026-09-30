@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useMarketStore } from '../store/useMarketStore';
+import { useNotificationStore } from '../store/useNotificationStore';
 
 const RAW_WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
 // Strip trailing /ws if provided in VITE_WS_BASE_URL to avoid /ws/ws URL duplication
@@ -9,6 +10,8 @@ const WS_BASE_URL = RAW_WS_BASE_URL.replace(/\/ws\/?$/, '');
 export function useWebSocket() {
   const token = useAuthStore((state) => state.token);
   const updateQuote = useMarketStore((state) => state.updateQuote);
+  const receiveNewsAlert = useNotificationStore((state) => state.receiveNewsAlert);
+
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -34,8 +37,10 @@ export function useWebSocket() {
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
-          if (message.data && message.data.last_price !== undefined) {
+          if (message.type === 'quote_update' && message.data) {
             updateQuote(message.data);
+          } else if (message.type === 'news_alert' && message.data) {
+            receiveNewsAlert(message.data);
           }
         } catch (err) {
           console.error('Failed to parse WebSocket message:', err);
@@ -64,7 +69,7 @@ export function useWebSocket() {
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       if (wsRef.current) wsRef.current.close();
     };
-  }, [token, updateQuote]);
+  }, [token, updateQuote, receiveNewsAlert]);
 
   const subscribe = (channel: string) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {

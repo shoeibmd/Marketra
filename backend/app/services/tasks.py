@@ -1,15 +1,15 @@
 import asyncio
 import logging
-import uuid
 from typing import Any
 
 from celery import Celery
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.websockets import manager as ws_manager
 from app.core.config import settings
 from app.db.session import PostgresSessionLocal
 from app.models.domain import ArticleInstrument, Instrument, NewsArticle
+from app.services.news.ai_enrichment import AIEnrichmentProcessor
 from app.services.news.matcher import CompanyMatcher
 from app.services.news.rss import RSSNewsProvider
 
@@ -24,7 +24,7 @@ celery_app = Celery(
 
 @celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
 def sync_live_news_feeds(self: Any) -> dict[str, int]:
-    """Celery background worker task for ingesting live Indian market news feeds."""
+    """Celery background worker task for ingesting live Indian market news feeds and broadcasting alerts."""
     try:
         loop = asyncio.get_event_loop()
     except RuntimeError:
@@ -42,6 +42,7 @@ def sync_live_news_feeds(self: Any) -> dict[str, int]:
 
 async def _ingest_news_async() -> tuple[int, int]:
     provider = RSSNewsProvider()
+    ai_processor = AIEnrichmentProcessor()
     items = await provider.fetch_news()
 
     inserted = 0
@@ -89,6 +90,9 @@ async def _ingest_news_async() -> tuple[int, int]:
                 content_hash=item.content_hash,
                 processing_status="normalized",
             )
+
+            # AI Analysis enrichment
+            await ai_processor.enrich_article(article, session)
             session.add(article)
 
             for inst_id, sym, sector, score in matches:
@@ -101,6 +105,20 @@ async def _ingest_news_async() -> tuple[int, int]:
                 session.add(junction)
 
             inserted += 1
+
+            # Broadcast WebSocket news_alert for important news events
+            if article.ai_importance in ["HIGH", "CRITICAL"] or article.category in ["corporate_earnings", "regulation"]:
+                alert_payload = {
+                    "news_id": str(article.id),
+                    "symbol": article.symbol or (matches[0][1] if matches else "INDIA_MARKET"),
+                    "company": article.company or "Indian Listed Entity",
+                    "title": article.title,
+                    "category": article.category,
+                    "importance": article.ai_importance or "HIGH",
+                    "summary": article.summary or article.title,
+                    "published_at": article.published_at.isoformat(),
+                }
+                await ws_manager.broadcast_news_alert(alert_payload)
 
         await session.commit()
 

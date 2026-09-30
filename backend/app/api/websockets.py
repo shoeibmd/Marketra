@@ -15,7 +15,7 @@ mock_provider = MockProvider()
 
 
 class WebSocketConnectionManager:
-    """Manages active WebSocket client connections and quote broadcasting."""
+    """Manages active WebSocket client connections and quote/news broadcasting."""
 
     def __init__(self) -> None:
         self.active_connections: list[WebSocket] = []
@@ -42,6 +42,14 @@ class WebSocketConnectionManager:
         for conn in disconnected:
             self.disconnect(conn)
 
+    async def broadcast_news_alert(self, news_alert_data: dict[str, Any]) -> None:
+        """Broadcast real-time news_alert event to all connected clients."""
+        payload = {
+            "type": "news_alert",
+            "data": news_alert_data,
+        }
+        await self.broadcast(payload)
+
 
 manager = WebSocketConnectionManager()
 
@@ -51,7 +59,7 @@ async def websocket_endpoint(
     websocket: WebSocket,
     token: str = Query(...),
 ) -> None:
-    """WebSocket endpoint for streaming realtime quotes (validates real JWT token)."""
+    """WebSocket endpoint for streaming realtime quotes and news alerts (validates real JWT token)."""
     try:
         payload = decode_token(token)
         email = payload.get("sub")

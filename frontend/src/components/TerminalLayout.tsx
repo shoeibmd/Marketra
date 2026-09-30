@@ -15,6 +15,7 @@ import {
 import { useAuthStore } from '../store/useAuthStore';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { NewsToastNotification } from './notifications/NewsToastNotification';
 
 interface NavigationProps {
   activeTab: string;
@@ -46,6 +47,9 @@ export function TerminalLayout({ activeTab, setActiveTab, children }: Navigation
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-100 font-mono overflow-hidden">
+      {/* Real-time Toast Notifications */}
+      <NewsToastNotification />
+
       {/* Sidebar Navigation */}
       <aside className="w-64 border-r border-slate-800 bg-slate-900/50 flex flex-col justify-between select-none">
         <div>
