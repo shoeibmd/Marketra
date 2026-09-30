@@ -67,6 +67,14 @@ class WebSocketConnectionManager:
         }
         await self.broadcast(payload)
 
+    async def broadcast_watchlist_alert(self, alert_data: dict[str, Any]) -> None:
+        """Phase 12: Broadcast real-time watchlist_alert to connected clients."""
+        payload = {
+            "type": "watchlist_alert",
+            "data": alert_data,
+        }
+        await self.broadcast(payload)
+
 
 manager = WebSocketConnectionManager()
 

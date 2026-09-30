@@ -40,6 +40,7 @@ import {
   EventIntelligencePanel,
   RelatedCompaniesPanel,
 } from './components/panels/events/EventPanels';
+import { PersonalizedWatchlistPanel } from './components/panels/watchlist/WatchlistPanels';
 
 export function registerDefaultPanels() {
   // Phase 11 - Market Panels
@@ -61,6 +62,16 @@ export function registerDefaultPanels() {
     defaultWidth: 4,
     defaultHeight: 3,
     component: WatchlistPanel,
+  });
+
+  panelRegistry.register({
+    type: 'personal_watchlist',
+    title: 'Personalized Watchlists & Smart Alerts',
+    description: 'Manage personal multi-watchlists with tailored smart event notifications',
+    category: 'Market',
+    defaultWidth: 6,
+    defaultHeight: 4,
+    component: PersonalizedWatchlistPanel,
   });
 
   panelRegistry.register({
