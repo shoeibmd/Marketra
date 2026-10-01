@@ -722,6 +722,46 @@ class ReconciliationRecord(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
 
 
+# Phase 16: Controlled Live Trading & Activation Models
+class LiveTradingActivationLog(Base):
+    __tablename__ = "live_trading_activation_logs"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    admin_user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    action: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    stage: Mapped[str] = mapped_column(String(20), nullable=False)
+    previous_state_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    new_state_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    reason: Mapped[str] = mapped_column(String(255), nullable=False)
+    source_ip: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+
+
+class OrderConfirmation(Base):
+    __tablename__ = "order_confirmations"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    confirmation_token: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    client_order_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    snapshot_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    order_params_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    is_used: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    is_invalidated: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
 class AIDocument(Base):
     __tablename__ = "ai_documents"
 
