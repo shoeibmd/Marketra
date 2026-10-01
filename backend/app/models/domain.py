@@ -378,6 +378,54 @@ class Notification(Base):
     )
 
 
+# Phase 13: Event Market Observations
+class EventMarketObservation(Base):
+    """Phase 13: Derived historical observations linking financial events to market data windows."""
+
+    __tablename__ = "event_market_observations"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    event_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("financial_events.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    instrument_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("instruments.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    event_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    session_classification: Mapped[str] = mapped_column(String(30), nullable=False, index=True)  # PRE_MARKET, INTRADAY, POST_MARKET, WEEKEND, MARKET_HOLIDAY
+
+    baseline_timestamp: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    baseline_price: Mapped[float | None] = mapped_column(Float, nullable=True)
+    price_at_event: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # Historical return windows
+    return_1d_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+    return_3d_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+    return_5d_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+    return_10d_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+    return_20d_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # Volume changes
+    volume_before: Mapped[float | None] = mapped_column(Float, nullable=True)
+    volume_after: Mapped[float | None] = mapped_column(Float, nullable=True)
+    volume_change_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    calculation_method: Mapped[str] = mapped_column(String(100), default="PREVIOUS_CLOSE_BASELINE", nullable=False)
+    data_status: Mapped[str] = mapped_column(String(30), default="AVAILABLE", nullable=False, index=True)  # AVAILABLE, INSUFFICIENT
+    metadata_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("event_id", "instrument_id", name="uq_event_instrument_observation"),
+    )
+
+
 class AIDocument(Base):
     __tablename__ = "ai_documents"
 

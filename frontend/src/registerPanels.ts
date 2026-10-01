@@ -41,6 +41,7 @@ import {
   RelatedCompaniesPanel,
 } from './components/panels/events/EventPanels';
 import { PersonalizedWatchlistPanel } from './components/panels/watchlist/WatchlistPanels';
+import './components/panels/analytics/AnalyticsPanels';
 
 export function registerDefaultPanels() {
   // Phase 11 - Market Panels

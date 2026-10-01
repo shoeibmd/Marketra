@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.domain import ArticleInstrument, EventCompanyRelationship, FinancialEvent, Instrument, NewsArticle
 from app.schemas.ai import ResearchQueryParsed
+from app.services.analytics.event_market_analytics import EventMarketAnalyticsService
 from app.services.providers.mock import MockProvider
 
 mock_market_provider = MockProvider()
@@ -19,7 +20,7 @@ def sanitize_text(text: str) -> str:
 
 
 class RAGRetrievalEngine:
-    """Multi-source evidence retriever querying news, events, company relationships, and market data."""
+    """Multi-source evidence retriever querying news, events, company relationships, market data, and historical observations."""
 
     @staticmethod
     async def retrieve_evidence(
@@ -36,11 +37,13 @@ class RAGRetrievalEngine:
             "news_articles": [],
             "financial_events": [],
             "relationships": [],
+            "historical_analytics": None,
             "market_data": None,
             "evidence_confidence": "HIGH",
         }
 
-        # 1. Instrument / Company Info
+        # 1. Instrument / Company Info & Historical Analytics
+        inst = None
         if parsed.symbol:
             inst_stmt = select(Instrument).where(Instrument.symbol == parsed.symbol)
             inst_res = await db_session.execute(inst_stmt)
@@ -92,7 +95,26 @@ class RAGRetrievalEngine:
             for e in events
         ]
 
-        # 3. News Articles Retrieval
+        # 3. Calculate Historical Event Market Observations
+        if inst and events:
+            analytics_service = EventMarketAnalyticsService(db_session)
+            observations = []
+            for e in events:
+                obs = await analytics_service.calculate_event_observation(e, inst)
+                observations.append(obs)
+
+            stats_1d = EventMarketAnalyticsService.compute_aggregate_statistics(observations, "1d")
+            stats_5d = EventMarketAnalyticsService.compute_aggregate_statistics(observations, "5d")
+
+            evidence["historical_analytics"] = {
+                "symbol": inst.symbol,
+                "observations_count": len(observations),
+                "aggregate_statistics_1d": stats_1d,
+                "aggregate_statistics_5d": stats_5d,
+                "disclaimer": "Historical event observations are factual price measurements and do not state or imply event causation or future stock returns.",
+            }
+
+        # 4. News Articles Retrieval
         news_stmt = select(NewsArticle).where(NewsArticle.published_at >= start_date)
 
         if parsed.symbol:
@@ -116,7 +138,7 @@ class RAGRetrievalEngine:
             for a in articles
         ]
 
-        # 4. Company Relationships
+        # 5. Company Relationships
         if parsed.symbol:
             rel_stmt = (
                 select(Instrument.symbol, Instrument.name, EventCompanyRelationship.role, EventCompanyRelationship.relationship_note)
