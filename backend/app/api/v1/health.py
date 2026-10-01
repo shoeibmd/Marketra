@@ -53,7 +53,7 @@ async def metrics() -> dict[str, Any]:
     }
 
 
-@router.get("/api/v1/system/news-sources", response_model=dict[str, Any])
+@router.get("/system/news-sources", response_model=dict[str, Any])
 async def get_system_news_sources_status(
     current_user: User = Depends(get_current_user),
 ) -> dict[str, Any]:
