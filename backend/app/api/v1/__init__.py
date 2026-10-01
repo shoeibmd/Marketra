@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.v1.ai import router as ai_router
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.brokers import router as brokers_router
 from app.api.v1.events import router as events_router
 from app.api.v1.fundamentals import router as fundamentals_router
 from app.api.v1.health import router as health_router
@@ -12,6 +13,8 @@ from app.api.v1.news import router as news_router
 from app.api.v1.notifications import router as notifications_router
 from app.api.v1.paper import router as paper_router
 from app.api.v1.portfolio import router as portfolio_router
+from app.api.v1.risk import router as risk_router
+from app.api.v1.trading import router as trading_router
 from app.api.v1.watchlists import router as watchlists_router
 from app.api.v1.workspaces import router as workspaces_router
 
@@ -26,6 +29,9 @@ api_v1_router.include_router(analytics_router)
 api_v1_router.include_router(watchlists_router)
 api_v1_router.include_router(notifications_router)
 api_v1_router.include_router(paper_router)
+api_v1_router.include_router(trading_router)
+api_v1_router.include_router(brokers_router)
+api_v1_router.include_router(risk_router)
 api_v1_router.include_router(portfolio_router)
 api_v1_router.include_router(workspaces_router)
 api_v1_router.include_router(ai_router)

@@ -594,6 +594,134 @@ class BacktestResult(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 
+# Phase 15: Broker Integration & Risk Engine Models
+class BrokerAccount(Base):
+    __tablename__ = "broker_accounts"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    provider_name: Mapped[str] = mapped_column(String(50), default="MOCK_LIVE_BROKER", nullable=False, index=True)
+    account_number: Mapped[str] = mapped_column(String(100), nullable=False)
+    status: Mapped[str] = mapped_column(String(30), default="NOT_CONFIGURED", nullable=False, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
+
+
+class BrokerOrderMapping(Base):
+    __tablename__ = "broker_order_mappings"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    client_order_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    broker_order_id: Mapped[str | None] = mapped_column(String(100), index=True, nullable=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    instrument_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("instruments.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    execution_mode: Mapped[str] = mapped_column(String(20), default="PAPER", nullable=False, index=True)
+    side: Mapped[str] = mapped_column(String(10), nullable=False)
+    order_type: Mapped[str] = mapped_column(String(20), default="MARKET", nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False)
+    filled_quantity: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
+    requested_price: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
+    avg_executed_price: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="CREATED", nullable=False, index=True)
+    rejection_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
+
+
+class RiskLimit(Base):
+    __tablename__ = "risk_limits"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    max_order_quantity: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("10000"), nullable=False)
+    max_order_value: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("250000.00"), nullable=False)
+    max_portfolio_exposure_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("80.00"), nullable=False)
+    daily_loss_limit: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("50000.00"), nullable=False)
+    max_open_orders: Mapped[int] = mapped_column(Integer, default=20, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
+
+
+class RiskDecision(Base):
+    __tablename__ = "risk_decisions"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    client_order_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    rule_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    input_value: Mapped[str] = mapped_column(String(100), nullable=False)
+    threshold_value: Mapped[str] = mapped_column(String(100), nullable=False)
+    decision: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    reason: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+
+
+class TradingAuditLog(Base):
+    __tablename__ = "trading_audit_logs"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    action: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    execution_mode: Mapped[str] = mapped_column(String(20), default="PAPER", nullable=False)
+    client_order_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    details_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+
+
+class ReconciliationRecord(Base):
+    __tablename__ = "reconciliation_records"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    client_order_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    broker_order_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
+    discrepancy_details: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+
+
 class AIDocument(Base):
     __tablename__ = "ai_documents"
 
