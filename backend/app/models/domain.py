@@ -1,5 +1,6 @@
 import uuid
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import (
@@ -10,6 +11,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    Numeric,
     String,
     Text,
     Uuid,
@@ -287,7 +289,6 @@ class EventCompanyRelationship(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 
-# Phase 12: Watchlists & Notification History Models
 class Watchlist(Base):
     __tablename__ = "watchlists"
 
@@ -378,7 +379,6 @@ class Notification(Base):
     )
 
 
-# Phase 13: Event Market Observations
 class EventMarketObservation(Base):
     """Phase 13: Derived historical observations linking financial events to market data windows."""
 
@@ -424,6 +424,174 @@ class EventMarketObservation(Base):
     __table_args__ = (
         UniqueConstraint("event_id", "instrument_id", name="uq_event_instrument_observation"),
     )
+
+
+# Phase 14: Paper Trading & Strategy Simulation Models
+class PaperTradingAccount(Base):
+    __tablename__ = "paper_trading_accounts"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(100), default="Primary Paper Account", nullable=False)
+    initial_cash: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("1000000.00"), nullable=False)
+    available_cash: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("1000000.00"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
+
+
+class PaperOrder(Base):
+    __tablename__ = "paper_orders"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("paper_trading_accounts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    instrument_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("instruments.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    side: Mapped[str] = mapped_column(String(10), nullable=False)  # BUY, SELL
+    order_type: Mapped[str] = mapped_column(String(20), default="MARKET", nullable=False)  # MARKET, LIMIT
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False)
+    requested_price: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
+    executed_price: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), default="PENDING", nullable=False, index=True)  # PENDING, EXECUTED, REJECTED, CANCELLED
+    rejection_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    executed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class PaperPosition(Base):
+    __tablename__ = "paper_positions"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("paper_trading_accounts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    instrument_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("instruments.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
+    average_entry_price: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
+    realized_pnl: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0.00"), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("account_id", "instrument_id", name="uq_account_instrument_position"),
+    )
+
+
+class PaperTrade(Base):
+    __tablename__ = "paper_trades"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("paper_trading_accounts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    order_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("paper_orders.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    instrument_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("instruments.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    side: Mapped[str] = mapped_column(String(10), nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False)
+    execution_price: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False)
+    fees: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0.00"), nullable=False)
+    slippage: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0.00"), nullable=False)
+    realized_pnl: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0.00"), nullable=False)
+    executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+
+
+class PaperPortfolioSnapshot(Base):
+    __tablename__ = "paper_portfolio_snapshots"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("paper_trading_accounts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    cash: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    positions_value: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    total_equity: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    unrealized_pnl: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    realized_pnl: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+
+
+class BacktestJob(Base):
+    __tablename__ = "backtest_jobs"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    strategy_name: Mapped[str] = mapped_column(String(50), nullable=False, index=True)  # SMA_CROSSOVER, EVENT_REACTION_RESEARCH
+    symbol: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
+    initial_capital: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("1000000.00"), nullable=False)
+    parameters_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="QUEUED", nullable=False, index=True)  # QUEUED, RUNNING, COMPLETED, FAILED
+    error_message: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class BacktestResult(Base):
+    __tablename__ = "backtest_results"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    job_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("backtest_jobs.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    initial_capital: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    final_equity: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    total_pnl: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    total_return_pct: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    max_drawdown_pct: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    trade_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    win_rate_pct: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0.00"), nullable=False)
+    metrics_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    equity_curve_json: Mapped[list[Any]] = mapped_column(JSON, default=list, nullable=False)
+    trades_json: Mapped[list[Any]] = mapped_column(JSON, default=list, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 
 class AIDocument(Base):

@@ -10,6 +10,7 @@ from app.api.v1.instruments import router as instruments_router
 from app.api.v1.market import router as market_router
 from app.api.v1.news import router as news_router
 from app.api.v1.notifications import router as notifications_router
+from app.api.v1.paper import router as paper_router
 from app.api.v1.portfolio import router as portfolio_router
 from app.api.v1.watchlists import router as watchlists_router
 from app.api.v1.workspaces import router as workspaces_router
@@ -24,6 +25,7 @@ api_v1_router.include_router(events_router)
 api_v1_router.include_router(analytics_router)
 api_v1_router.include_router(watchlists_router)
 api_v1_router.include_router(notifications_router)
+api_v1_router.include_router(paper_router)
 api_v1_router.include_router(portfolio_router)
 api_v1_router.include_router(workspaces_router)
 api_v1_router.include_router(ai_router)
