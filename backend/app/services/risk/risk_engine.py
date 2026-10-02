@@ -15,12 +15,23 @@ logger = logging.getLogger("terminal.risk_engine")
 class RiskEngine:
     """Independent pre-trade risk engine and live trading safety gate."""
 
+    _STAGE_A_LIVE_ENABLED: bool | None = None
+    _STAGE_B_KILL_SWITCH: bool | None = None
+
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-        # Environment Safety Gate Defaults
-        self.live_trading_enabled = os.getenv("LIVE_TRADING_ENABLED", "false").lower() == "true"
-        self.trading_kill_switch = os.getenv("TRADING_KILL_SWITCH", "true").lower() == "true"
+        # Environment Safety Gate Defaults or Runtime Overrides
+        if RiskEngine._STAGE_A_LIVE_ENABLED is not None:
+            self.live_trading_enabled = RiskEngine._STAGE_A_LIVE_ENABLED
+        else:
+            self.live_trading_enabled = os.getenv("LIVE_TRADING_ENABLED", "false").lower() == "true"
+
+        if RiskEngine._STAGE_B_KILL_SWITCH is not None:
+            self.trading_kill_switch = RiskEngine._STAGE_B_KILL_SWITCH
+        else:
+            self.trading_kill_switch = os.getenv("TRADING_KILL_SWITCH", "true").lower() == "true"
+
         self.risk_engine_enabled = os.getenv("RISK_ENGINE_ENABLED", "true").lower() == "true"
         self.broker_configured = os.getenv("BROKER_CONFIGURED", "false").lower() == "true"
 

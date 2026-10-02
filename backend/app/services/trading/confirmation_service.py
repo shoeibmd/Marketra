@@ -3,6 +3,7 @@ import json
 import logging
 import uuid
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import select
@@ -15,12 +16,24 @@ logger = logging.getLogger("terminal.confirmation_service")
 
 def compute_order_snapshot_hash(order_params: dict[str, Any]) -> str:
     """Compute deterministic SHA-256 hash of immutable order parameters."""
+    raw_qty = order_params.get("quantity")
+    try:
+        qty_str = str(Decimal(str(raw_qty))) if raw_qty is not None else "0"
+    except Exception:
+        qty_str = str(raw_qty)
+
+    raw_price = order_params.get("requested_price")
+    try:
+        price_str = str(Decimal(str(raw_price))) if raw_price is not None else ""
+    except Exception:
+        price_str = str(raw_price) if raw_price is not None else ""
+
     normalized = {
         "symbol": str(order_params.get("symbol", "")).upper().strip(),
         "side": str(order_params.get("side", "")).upper().strip(),
-        "quantity": str(order_params.get("quantity", "")),
+        "quantity": qty_str,
         "order_type": str(order_params.get("order_type", "MARKET")).upper().strip(),
-        "requested_price": str(order_params.get("requested_price", "")),
+        "requested_price": price_str,
         "execution_mode": str(order_params.get("execution_mode", "PAPER")).upper().strip(),
     }
     encoded = json.dumps(normalized, sort_keys=True).encode("utf-8")

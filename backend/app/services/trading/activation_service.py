@@ -2,7 +2,6 @@ import logging
 import uuid
 from typing import Any
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.domain import LiveTradingActivationLog, TradingAuditLog, User
@@ -37,17 +36,18 @@ class LiveTradingActivationService:
 
         stage_clean = stage.upper().strip()
         if stage_clean == "STAGE_A":
-            risk_engine.live_trading_enabled = enable
+            RiskEngine._STAGE_A_LIVE_ENABLED = enable
             action = "ENABLE_LIVE_TRADING_STAGE_A" if enable else "DISABLE_LIVE_TRADING_STAGE_A"
         elif stage_clean == "STAGE_B":
-            risk_engine.trading_kill_switch = not enable  # Stage B enable means kill switch deactivated
+            RiskEngine._STAGE_B_KILL_SWITCH = not enable  # Stage B enable means kill switch deactivated
             action = "DEACTIVATE_KILL_SWITCH_STAGE_B" if enable else "ACTIVATE_KILL_SWITCH_STAGE_B"
         else:
             raise ValueError(f"INVALID_STAGE: Supported stages are STAGE_A and STAGE_B (got '{stage}')")
 
+        updated_risk_engine = RiskEngine(self.db)
         new_state = {
-            "live_trading_enabled": risk_engine.live_trading_enabled,
-            "trading_kill_switch": risk_engine.trading_kill_switch,
+            "live_trading_enabled": updated_risk_engine.live_trading_enabled,
+            "trading_kill_switch": updated_risk_engine.trading_kill_switch,
         }
 
         # Log to LiveTradingActivationLog
@@ -87,5 +87,5 @@ class LiveTradingActivationService:
             "stage": stage_clean,
             "previous_state": prev_state,
             "current_state": new_state,
-            "effective_live_trading_active": risk_engine.live_trading_enabled and not risk_engine.trading_kill_switch,
+            "effective_live_trading_active": updated_risk_engine.live_trading_enabled and not updated_risk_engine.trading_kill_switch,
         }
