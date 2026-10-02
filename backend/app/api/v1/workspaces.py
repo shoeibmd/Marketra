@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth.auth_service import get_current_user
 from app.db.session import get_postgres_db
-from app.models.domain import Workspace
+from app.models.domain import User, Workspace
 from app.schemas.workspace import (
     WorkspaceCreateRequest,
     WorkspaceResponse,
@@ -21,10 +21,10 @@ router = APIRouter(prefix="/workspaces", tags=["Workspaces"])
 @router.get("", response_model=list[WorkspaceResponse])
 async def list_user_workspaces(
     db: AsyncSession = Depends(get_postgres_db),
-    current_user: dict[str, Any] = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> list[WorkspaceResponse]:
     """List all workspaces owned by the user."""
-    user_id = uuid.UUID(current_user["id"])
+    user_id = current_user.id
     stmt = select(Workspace).where(Workspace.user_id == user_id)
     workspaces = (await db.scalars(stmt)).all()
 
@@ -84,10 +84,10 @@ async def list_user_workspaces(
 async def get_workspace(
     workspace_id: uuid.UUID,
     db: AsyncSession = Depends(get_postgres_db),
-    current_user: dict[str, Any] = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> WorkspaceResponse:
     """Fetch single workspace layout details."""
-    user_id = uuid.UUID(current_user["id"])
+    user_id = current_user.id
     ws = await db.get(Workspace, workspace_id)
     if not ws or ws.user_id != user_id:
         raise HTTPException(
@@ -111,10 +111,10 @@ async def get_workspace(
 async def create_workspace(
     req: WorkspaceCreateRequest,
     db: AsyncSession = Depends(get_postgres_db),
-    current_user: dict[str, Any] = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> WorkspaceResponse:
     """Create a new workspace layout."""
-    user_id = uuid.UUID(current_user["id"])
+    user_id = current_user.id
     ws = Workspace(
         id=uuid.uuid4(),
         user_id=user_id,
@@ -146,10 +146,10 @@ async def update_workspace(
     workspace_id: uuid.UUID,
     req: WorkspaceUpdateRequest,
     db: AsyncSession = Depends(get_postgres_db),
-    current_user: dict[str, Any] = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> WorkspaceResponse:
     """Update workspace layout config or metadata."""
-    user_id = uuid.UUID(current_user["id"])
+    user_id = current_user.id
     ws = await db.get(Workspace, workspace_id)
     if not ws or ws.user_id != user_id:
         raise HTTPException(
@@ -186,10 +186,10 @@ async def update_workspace(
 async def delete_workspace(
     workspace_id: uuid.UUID,
     db: AsyncSession = Depends(get_postgres_db),
-    current_user: dict[str, Any] = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Delete a workspace."""
-    user_id = uuid.UUID(current_user["id"])
+    user_id = current_user.id
     ws = await db.get(Workspace, workspace_id)
     if not ws or ws.user_id != user_id:
         raise HTTPException(

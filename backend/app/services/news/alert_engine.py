@@ -34,8 +34,8 @@ class SmartAlertEngine:
 
         # 1. Collect all company instrument_ids involved in event
         related_instrument_ids = {rel.instrument_id for rel in event_relationships if rel.instrument_id}
-        if event.primary_instrument_id:
-            related_instrument_ids.add(event.primary_instrument_id)
+        if event.primary_company_id:
+            related_instrument_ids.add(event.primary_company_id)
 
         if not related_instrument_ids:
             return []
@@ -65,7 +65,6 @@ class SmartAlertEngine:
             pref = pref_res.scalar_one_or_none()
 
             filter_setting = pref.filter_setting if pref else "ALL_IMPORTANT_NEWS"
-            min_importance = pref.minimum_importance if pref else "HIGH"
 
             # Check threshold
             if filter_setting == "HIGH_CRITICAL_ONLY" and event.importance not in ["HIGH", "CRITICAL"]:
@@ -84,12 +83,10 @@ class SmartAlertEngine:
                 id=uuid.uuid4(),
                 user_id=user_id,
                 event_id=event.id,
-                title=f"Smart Alert: {event.title}",
-                summary=event.summary or "",
+                notification_type="watchlist_alert",
+                title=f"Smart Alert: {event.event_title}",
+                summary=event.event_summary or "",
                 importance=event.importance,
-                event_type=event.event_type,
-                matched_symbol=event.event_type,
-                trigger_reason=f"Matched watchlist instruments (Importance: {event.importance})",
                 is_read=False,
             )
             self.db.add(notification)

@@ -6,9 +6,11 @@ from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.auth.jwt_handler import create_access_token
+from app.core.auth.auth_service import get_current_user
 from app.db.session import get_postgres_db
 from app.main import app
 from app.models import Base
+from app.models.domain import User
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
@@ -30,15 +32,31 @@ async def async_session() -> AsyncGenerator[AsyncSession, None]:
 
 @pytest.mark.asyncio
 async def test_workspace_crud_and_isolation(async_session: AsyncSession) -> None:
+    user_id = uuid.UUID("11111111-1111-1111-1111-111111111111")
+    user = User(
+        id=user_id,
+        email="trader@terminal.org",
+        hashed_password="hash",
+        full_name="Trader",
+        role="user",
+    )
+    async_session.add(user)
+    await async_session.commit()
+
     async def _override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield async_session
 
+    async def _override_get_current_user() -> User:
+        return user
+
     app.dependency_overrides[get_postgres_db] = _override_get_db
+    app.dependency_overrides[get_current_user] = _override_get_current_user
+
     client = TestClient(app)
 
     token = create_access_token({
         "sub": "trader@terminal.org",
-        "user_id": "11111111-1111-1111-1111-111111111111",
+        "user_id": str(user_id),
         "role": "USER",
     })
     headers = {"Authorization": f"Bearer {token}"}
