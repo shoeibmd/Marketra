@@ -87,6 +87,10 @@ async def websocket_endpoint(
     """Production Hardened WebSocket endpoint for quote streaming, news alerts & financial events."""
     try:
         payload = decode_token(token)
+        if payload.get("type") and payload.get("type") != "access":
+            await websocket.close(code=4001, reason="Invalid token type")
+            return
+
         email = payload.get("sub")
         if not email:
             await websocket.close(code=4001, reason="Invalid token claims")
