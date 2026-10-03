@@ -821,6 +821,43 @@ class PortfolioRiskSnapshot(Base):
     data_quality_status: Mapped[str] = mapped_column(String(30), default="AVAILABLE", nullable=False, index=True)
 
 
+# Phase 29: Multi-Portfolio Grouping Models
+class PortfolioGroup(Base):
+    __tablename__ = "portfolio_groups"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
+
+
+class PortfolioGroupMembership(Base):
+    __tablename__ = "portfolio_group_memberships"
+
+    group_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("portfolio_groups.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    )
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("paper_trading_accounts.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
 # Phase 28: Automated Portfolio Intelligence & Briefing Models
 class PortfolioBriefingPreference(Base):
     __tablename__ = "portfolio_briefing_preferences"

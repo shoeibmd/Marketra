@@ -9,6 +9,7 @@ from uuid import UUID
 
 from app.schemas.ai import ResearchQueryParsed
 from app.services.analytics.event_market_analytics import EventMarketAnalyticsService
+from app.services.analytics.multi_portfolio_service import MultiPortfolioService
 from app.services.analytics.portfolio_analytics import PortfolioAnalyticsService
 from app.services.analytics.portfolio_risk import PortfolioRiskService
 from app.services.providers.mock import MockProvider
@@ -189,9 +190,16 @@ class RAGRetrievalEngine:
                 res_alerts = await db_session.execute(stmt_alerts)
                 active_alerts = res_alerts.scalars().all()
 
+                multi_port_svc = MultiPortfolioService(db_session)
+                consolidated = await multi_port_svc.get_consolidated_portfolio(user_id=user_id)
+                duplicates = await multi_port_svc.detect_duplicate_exposures(user_id=user_id)
+
                 evidence["portfolio_analytics"] = {
                     "account_summary": portfolio_analytics.get("summary"),
                     "risk_analytics": portfolio_analytics.get("risk_analytics"),
+                    "consolidated_multi_portfolio": consolidated.get("consolidated_summary"),
+                    "duplicate_exposures_count": len(duplicates),
+                    "duplicate_exposures": duplicates[:3],
                     "var_and_expected_shortfall": var_es,
                     "diversification": div,
                     "highly_correlated_pairs": corr.get("highly_correlated_pairs", []),

@@ -404,6 +404,37 @@ class ApiClient {
   async getPortfolioChanges(): Promise<any[]> {
     return this.request<any[]>('/api/v1/portfolio/briefings/changes');
   }
+
+  // Phase 29: Multi-Portfolio Intelligence
+  async getUserPortfolios(): Promise<any[]> {
+    return this.request<any[]>('/api/v1/portfolios');
+  }
+
+  async createPortfolioAccount(name: string, initialCash = 1000000.0, portfolioType = 'PAPER'): Promise<any> {
+    return this.request<any>('/api/v1/portfolios', {
+      method: 'POST',
+      body: JSON.stringify({ name, initial_cash: initialCash, portfolio_type: portfolioType }),
+    });
+  }
+
+  async comparePortfolios(accountIds?: string[]): Promise<any[]> {
+    const url = accountIds && accountIds.length > 0
+      ? `/api/v1/portfolios/compare?${accountIds.map((id) => `account_ids=${id}`).join('&')}`
+      : '/api/v1/portfolios/compare';
+    return this.request<any[]>(url);
+  }
+
+  async getConsolidatedPortfolio(): Promise<any> {
+    return this.request<any>('/api/v1/portfolios/consolidated');
+  }
+
+  async getDuplicateExposures(): Promise<any[]> {
+    return this.request<any[]>('/api/v1/portfolios/consolidated/exposure');
+  }
+
+  async getPortfolioAttribution(): Promise<any> {
+    return this.request<any>('/api/v1/portfolios/consolidated/attribution');
+  }
 }
 
 export const api = new ApiClient();

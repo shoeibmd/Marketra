@@ -64,6 +64,12 @@ import {
   PortfolioBriefingSettingsPanel,
   PortfolioChangeTimelinePanel,
 } from './components/panels/briefings/PortfolioBriefingPanels';
+import {
+  DuplicateExposurePanel,
+  MultiPortfolioOverviewPanel,
+  PortfolioAttributionPanel,
+  PortfolioComparisonPanel,
+} from './components/panels/portfolio/MultiPortfolioPanels';
 import './components/panels/analytics/AnalyticsPanels';
 import './components/panels/paper/PaperTradingPanels';
 import './components/panels/trading/TradingPanels';
@@ -394,6 +400,46 @@ export function registerDefaultPanels() {
     defaultWidth: 6,
     defaultHeight: 3,
     component: PortfolioChangeTimelinePanel,
+  });
+
+  panelRegistry.register({
+    type: 'multi_portfolio_overview',
+    title: 'Multi-Portfolio Overview & Selector',
+    description: 'Consolidated multi-account equity summary and portfolio account manager',
+    category: 'Portfolio',
+    defaultWidth: 6,
+    defaultHeight: 4,
+    component: MultiPortfolioOverviewPanel,
+  });
+
+  panelRegistry.register({
+    type: 'portfolio_comparison',
+    title: 'Side-by-Side Portfolio Comparison',
+    description: 'Factual metrics comparison across user-owned portfolio accounts',
+    category: 'Portfolio',
+    defaultWidth: 8,
+    defaultHeight: 4,
+    component: PortfolioComparisonPanel,
+  });
+
+  panelRegistry.register({
+    type: 'duplicate_exposure',
+    title: 'Duplicate Cross-Portfolio Exposure',
+    description: 'Identifies overlapping company and sector holdings across portfolios',
+    category: 'Portfolio',
+    defaultWidth: 6,
+    defaultHeight: 3,
+    component: DuplicateExposurePanel,
+  });
+
+  panelRegistry.register({
+    type: 'portfolio_attribution',
+    title: 'Performance Attribution',
+    description: 'P&L contribution attribution by portfolio account',
+    category: 'Portfolio',
+    defaultWidth: 6,
+    defaultHeight: 3,
+    component: PortfolioAttributionPanel,
   });
 
   panelRegistry.register({
