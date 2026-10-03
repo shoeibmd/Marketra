@@ -324,6 +324,45 @@ class ApiClient {
       body: JSON.stringify(body),
     });
   }
+
+  // Phase 26: Portfolio Risk Monitoring & Alerts
+  async getRiskAlerts(statusFilter?: string): Promise<any[]> {
+    const url = statusFilter ? `/api/v1/portfolio/risk/alerts?status_filter=${statusFilter}` : '/api/v1/portfolio/risk/alerts';
+    return this.request<any[]>(url);
+  }
+
+  async getRiskAlertPreferences(): Promise<any> {
+    return this.request<any>('/api/v1/portfolio/risk/alerts/preferences');
+  }
+
+  async updateRiskAlertPreferences(body: any): Promise<any> {
+    return this.request<any>('/api/v1/portfolio/risk/alerts/preferences', {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async resetRiskAlertPreferences(): Promise<any> {
+    return this.request<any>('/api/v1/portfolio/risk/alerts/preferences/reset', {
+      method: 'POST',
+    });
+  }
+
+  async markRiskAlertRead(alertId: string): Promise<any> {
+    return this.request<any>(`/api/v1/portfolio/risk/alerts/${alertId}/read`, {
+      method: 'POST',
+    });
+  }
+
+  async triggerRiskEvaluationTest(): Promise<any> {
+    return this.request<any>('/api/v1/portfolio/risk/alerts/test', {
+      method: 'POST',
+    });
+  }
+
+  async getRiskHistory(): Promise<any> {
+    return this.request<any>('/api/v1/portfolio/risk/history');
+  }
 }
 
 export const api = new ApiClient();

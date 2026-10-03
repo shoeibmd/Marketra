@@ -49,6 +49,11 @@ import {
   PortfolioRiskOverviewPanel,
   PortfolioStressTestPanel,
 } from './components/panels/risk/PortfolioRiskPanels';
+import {
+  PortfolioRiskAlertsPanel,
+  PortfolioRiskAlertSettingsPanel,
+  PortfolioRiskHistoryPanel,
+} from './components/panels/risk/PortfolioRiskAlertPanels';
 import './components/panels/analytics/AnalyticsPanels';
 import './components/panels/paper/PaperTradingPanels';
 import './components/panels/trading/TradingPanels';
@@ -309,6 +314,36 @@ export function registerDefaultPanels() {
     defaultWidth: 4,
     defaultHeight: 3,
     component: PortfolioRiskContributionPanel,
+  });
+
+  panelRegistry.register({
+    type: 'portfolio_risk_alerts',
+    title: 'Portfolio Risk Alerts Dashboard',
+    description: 'Active and historical threshold risk notifications',
+    category: 'Portfolio',
+    defaultWidth: 6,
+    defaultHeight: 4,
+    component: PortfolioRiskAlertsPanel,
+  });
+
+  panelRegistry.register({
+    type: 'portfolio_risk_alert_settings',
+    title: 'Risk Threshold Settings',
+    description: 'User-configurable risk alert parameters and preferences',
+    category: 'Portfolio',
+    defaultWidth: 4,
+    defaultHeight: 3,
+    component: PortfolioRiskAlertSettingsPanel,
+  });
+
+  panelRegistry.register({
+    type: 'portfolio_risk_history',
+    title: 'Visual Risk Timeline & History',
+    description: 'Historical risk snapshot trend chronology',
+    category: 'Portfolio',
+    defaultWidth: 6,
+    defaultHeight: 3,
+    component: PortfolioRiskHistoryPanel,
   });
 
   panelRegistry.register({

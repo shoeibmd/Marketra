@@ -4,7 +4,7 @@ from typing import Any
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.domain import ArticleInstrument, EventCompanyRelationship, FinancialEvent, Instrument, NewsArticle
+from app.models.domain import ArticleInstrument, EventCompanyRelationship, FinancialEvent, Instrument, NewsArticle, PortfolioRiskAlert
 from uuid import UUID
 
 from app.schemas.ai import ResearchQueryParsed
@@ -179,6 +179,16 @@ class RAGRetrievalEngine:
                             pos_match = pos
                             break
 
+                # Query active risk alerts for AI explanation
+                stmt_alerts = (
+                    select(PortfolioRiskAlert)
+                    .where(PortfolioRiskAlert.user_id == user_id, PortfolioRiskAlert.status == "TRIGGERED")
+                    .order_by(PortfolioRiskAlert.triggered_at.desc())
+                    .limit(5)
+                )
+                res_alerts = await db_session.execute(stmt_alerts)
+                active_alerts = res_alerts.scalars().all()
+
                 evidence["portfolio_analytics"] = {
                     "account_summary": portfolio_analytics.get("summary"),
                     "risk_analytics": portfolio_analytics.get("risk_analytics"),
@@ -186,6 +196,19 @@ class RAGRetrievalEngine:
                     "diversification": div,
                     "highly_correlated_pairs": corr.get("highly_correlated_pairs", []),
                     "stress_test_nifty_minus_10": stress_m10.get("hypothetical_impact"),
+                    "active_risk_alerts": [
+                        {
+                            "id": str(a.id),
+                            "alert_type": a.alert_type,
+                            "severity": a.severity,
+                            "metric_name": a.metric_name,
+                            "current_value": float(a.current_value),
+                            "threshold_value": float(a.threshold_value),
+                            "explanation": a.explanation,
+                            "triggered_at": a.triggered_at.isoformat(),
+                        }
+                        for a in active_alerts
+                    ],
                     "queried_symbol_position": pos_match,
                     "disclaimer": "Portfolio context and risk analytics are factual internal position and statistical risk data.",
                 }

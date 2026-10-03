@@ -821,6 +821,92 @@ class PortfolioRiskSnapshot(Base):
     data_quality_status: Mapped[str] = mapped_column(String(30), default="AVAILABLE", nullable=False, index=True)
 
 
+# Phase 26: Portfolio Risk Monitoring & Alerts Models
+class PortfolioRiskAlertPreference(Base):
+    __tablename__ = "portfolio_risk_alert_preferences"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    drawdown_threshold_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("5.00"), nullable=False)
+    daily_loss_threshold_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("3.00"), nullable=False)
+    daily_loss_threshold_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("50000.00"), nullable=False)
+    var_threshold_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("5.00"), nullable=False)
+    expected_shortfall_threshold_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("7.50"), nullable=False)
+    company_concentration_threshold_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("25.00"), nullable=False)
+    sector_concentration_threshold_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("40.00"), nullable=False)
+    correlation_threshold: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("0.75"), nullable=False)
+    volatility_threshold_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("20.00"), nullable=False)
+    cooldown_minutes: Mapped[int] = mapped_column(Integer, default=60, nullable=False)
+    enabled_alerts_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=list, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default_utc_now, onupdate=utc_now, nullable=False
+    )
+
+
+class PortfolioRiskAlert(Base):
+    __tablename__ = "portfolio_risk_alerts"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    account_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("paper_trading_accounts.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    alert_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    severity: Mapped[str] = mapped_column(String(20), default="WARNING", nullable=False)
+    metric_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    current_value: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False)
+    threshold_value: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False)
+    unit: Mapped[str] = mapped_column(String(20), default="PCT", nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="TRIGGERED", nullable=False, index=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    data_quality_status: Mapped[str] = mapped_column(String(30), default="AVAILABLE", nullable=False)
+    affected_symbols_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=list, nullable=False)
+    affected_sectors_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=list, nullable=False)
+    explanation: Mapped[str] = mapped_column(Text, nullable=False)
+    triggered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    recovered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+
+
+class PortfolioRiskAlertState(Base):
+    __tablename__ = "portfolio_risk_alert_states"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    alert_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    state: Mapped[str] = mapped_column(String(20), default="NORMAL", nullable=False)
+    last_triggered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_value: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
+    cooldown_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "fingerprint", name="uq_user_risk_alert_fingerprint"),
+    )
+
+
 class AIDocument(Base):
     __tablename__ = "ai_documents"
 
