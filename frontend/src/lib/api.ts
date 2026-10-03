@@ -372,6 +372,38 @@ class ApiClient {
   async exportRiskCommandCenterReport(): Promise<any> {
     return this.request<any>('/api/v1/portfolio/risk-command-center/export');
   }
+
+  // Phase 28: Automated Portfolio Intelligence & Briefings
+  async getBriefings(type?: string): Promise<any[]> {
+    const url = type ? `/api/v1/portfolio/briefings?briefing_type=${type}` : '/api/v1/portfolio/briefings';
+    return this.request<any[]>(url);
+  }
+
+  async getBriefingDetail(briefingId: string): Promise<any> {
+    return this.request<any>(`/api/v1/portfolio/briefings/${briefingId}`);
+  }
+
+  async generateBriefingOnDemand(briefingType = 'DAILY'): Promise<any> {
+    return this.request<any>('/api/v1/portfolio/briefings/generate', {
+      method: 'POST',
+      body: JSON.stringify({ briefing_type: briefingType }),
+    });
+  }
+
+  async getBriefingPreferences(): Promise<any> {
+    return this.request<any>('/api/v1/portfolio/briefings/preferences');
+  }
+
+  async updateBriefingPreferences(body: any): Promise<any> {
+    return this.request<any>('/api/v1/portfolio/briefings/preferences', {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async getPortfolioChanges(): Promise<any[]> {
+    return this.request<any[]>('/api/v1/portfolio/briefings/changes');
+  }
 }
 
 export const api = new ApiClient();

@@ -17,6 +17,7 @@ from app.api.v1.portfolio import router as portfolio_router
 from app.api.v1.portfolio_analytics import router as portfolio_analytics_router
 from app.api.v1.portfolio_risk import router as portfolio_risk_router
 from app.api.v1.portfolio_risk_alerts import router as portfolio_risk_alerts_router
+from app.api.v1.portfolio_briefings import router as portfolio_briefings_router
 from app.api.v1.portfolio_risk_command_center import router as portfolio_risk_command_center_router
 from app.api.v1.reconciliation import router as reconciliation_router
 from app.api.v1.risk import router as risk_router
@@ -44,6 +45,7 @@ api_v1_router.include_router(portfolio_router)
 api_v1_router.include_router(portfolio_analytics_router)
 api_v1_router.include_router(portfolio_risk_router)
 api_v1_router.include_router(portfolio_risk_alerts_router)
+api_v1_router.include_router(portfolio_briefings_router)
 api_v1_router.include_router(portfolio_risk_command_center_router)
 api_v1_router.include_router(workspaces_router)
 api_v1_router.include_router(ai_router)

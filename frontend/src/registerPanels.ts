@@ -59,6 +59,11 @@ import {
   PortfolioPerformanceSummaryPanel,
   PortfolioRiskCommandCenterPanel,
 } from './components/panels/risk/PortfolioRiskCommandCenterPanels';
+import {
+  PortfolioBriefingPanel,
+  PortfolioBriefingSettingsPanel,
+  PortfolioChangeTimelinePanel,
+} from './components/panels/briefings/PortfolioBriefingPanels';
 import './components/panels/analytics/AnalyticsPanels';
 import './components/panels/paper/PaperTradingPanels';
 import './components/panels/trading/TradingPanels';
@@ -369,6 +374,36 @@ export function registerDefaultPanels() {
     defaultWidth: 4,
     defaultHeight: 3,
     component: PortfolioDataQualityPanel,
+  });
+
+  panelRegistry.register({
+    type: 'portfolio_briefing',
+    title: 'Portfolio Research Briefing',
+    description: 'Daily, pre-market, intraday, and weekly source-grounded research briefings',
+    category: 'Portfolio',
+    defaultWidth: 6,
+    defaultHeight: 4,
+    component: PortfolioBriefingPanel,
+  });
+
+  panelRegistry.register({
+    type: 'portfolio_change_timeline',
+    title: 'Real-time Portfolio Change Timeline',
+    description: 'Chronological timeline of material portfolio value, risk, and event changes',
+    category: 'Portfolio',
+    defaultWidth: 6,
+    defaultHeight: 3,
+    component: PortfolioChangeTimelinePanel,
+  });
+
+  panelRegistry.register({
+    type: 'portfolio_briefing_settings',
+    title: 'Briefing Schedule & Preferences',
+    description: 'User delivery schedules and significance threshold preferences',
+    category: 'Portfolio',
+    defaultWidth: 4,
+    defaultHeight: 3,
+    component: PortfolioBriefingSettingsPanel,
   });
 
   panelRegistry.register({

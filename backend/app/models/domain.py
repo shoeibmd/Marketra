@@ -821,6 +821,88 @@ class PortfolioRiskSnapshot(Base):
     data_quality_status: Mapped[str] = mapped_column(String(30), default="AVAILABLE", nullable=False, index=True)
 
 
+# Phase 28: Automated Portfolio Intelligence & Briefing Models
+class PortfolioBriefingPreference(Base):
+    __tablename__ = "portfolio_briefing_preferences"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    daily_briefing_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    weekly_briefing_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    pre_market_briefing_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    intraday_briefing_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    preferred_delivery_time: Mapped[str] = mapped_column(String(10), default="08:30", nullable=False)
+    minimum_significance: Mapped[str] = mapped_column(String(20), default="MATERIAL", nullable=False)
+    sections_config_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default_utc_now, onupdate=utc_now, nullable=False
+    )
+
+
+class PortfolioBriefing(Base):
+    __tablename__ = "portfolio_briefings"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    account_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("paper_trading_accounts.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    briefing_type: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(20), default="COMPLETED", nullable=False, index=True)
+    significance: Mapped[str] = mapped_column(String(20), default="MATERIAL", nullable=False)
+    summary_title: Mapped[str] = mapped_column(String(255), nullable=False)
+    content_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    sources_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=list, nullable=False)
+    data_quality_status: Mapped[str] = mapped_column(String(30), default="AVAILABLE", nullable=False)
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default_utc_now, nullable=False, index=True)
+    period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+
+
+class PortfolioChangeEvent(Base):
+    __tablename__ = "portfolio_change_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    account_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("paper_trading_accounts.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    change_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    significance: Mapped[str] = mapped_column(String(20), default="MATERIAL", nullable=False, index=True)
+    previous_value: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
+    current_value: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
+    absolute_change: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
+    percentage_change: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
+    affected_symbols_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=list, nullable=False)
+    affected_sectors_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=list, nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    data_quality_status: Mapped[str] = mapped_column(String(30), default="AVAILABLE", nullable=False)
+    detected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default_utc_now, nullable=False, index=True)
+
+
 # Phase 26: Portfolio Risk Monitoring & Alerts Models
 class PortfolioRiskAlertPreference(Base):
     __tablename__ = "portfolio_risk_alert_preferences"
