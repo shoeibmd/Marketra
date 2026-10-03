@@ -821,6 +821,35 @@ class PortfolioRiskSnapshot(Base):
     data_quality_status: Mapped[str] = mapped_column(String(30), default="AVAILABLE", nullable=False, index=True)
 
 
+# Phase 30: Market Intelligence Models
+class MarketRegimeSnapshot(Base):
+    __tablename__ = "market_regime_snapshots"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    regime_classification: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
+    nifty50_return_pct: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0.00"), nullable=False)
+    market_breadth_ratio: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("1.00"), nullable=False)
+    realized_volatility_pct: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("15.00"), nullable=False)
+    data_quality_status: Mapped[str] = mapped_column(String(30), default="AVAILABLE", nullable=False)
+    metrics_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+
+
+class MarketAnomalyRecord(Base):
+    __tablename__ = "market_anomaly_records"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    anomaly_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    symbol: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
+    sector: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    observed_value: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False)
+    baseline_value: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False)
+    deviation_pct: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    data_quality_status: Mapped[str] = mapped_column(String(30), default="AVAILABLE", nullable=False)
+
+
 # Phase 29: Multi-Portfolio Grouping Models
 class PortfolioGroup(Base):
     __tablename__ = "portfolio_groups"

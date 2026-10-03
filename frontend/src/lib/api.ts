@@ -435,6 +435,27 @@ class ApiClient {
   async getPortfolioAttribution(): Promise<any> {
     return this.request<any>('/api/v1/portfolios/consolidated/attribution');
   }
+
+  // Phase 30: Advanced Market Intelligence
+  async getMarketIntelligenceOverview(): Promise<any> {
+    return this.request<any>('/api/v1/market-intelligence/overview');
+  }
+
+  async getMarketBreadth(): Promise<any> {
+    return this.request<any>('/api/v1/market-intelligence/breadth');
+  }
+
+  async getSectorIntelligence(): Promise<any> {
+    return this.request<any>('/api/v1/market-intelligence/sectors');
+  }
+
+  async getMarketRegime(): Promise<any> {
+    return this.request<any>('/api/v1/market-intelligence/regime');
+  }
+
+  async getMarketAnomalies(): Promise<any[]> {
+    return this.request<any[]>('/api/v1/market-intelligence/anomalies');
+  }
 }
 
 export const api = new ApiClient();

@@ -70,6 +70,13 @@ import {
   PortfolioAttributionPanel,
   PortfolioComparisonPanel,
 } from './components/panels/portfolio/MultiPortfolioPanels';
+import {
+  MarketAnomaliesPanel,
+  MarketBreadthPanel,
+  MarketIntelligenceCommandCenterPanel,
+  MarketRegimePanel,
+  SectorIntelligencePanel,
+} from './components/panels/market/MarketIntelligencePanels';
 import './components/panels/analytics/AnalyticsPanels';
 import './components/panels/paper/PaperTradingPanels';
 import './components/panels/trading/TradingPanels';
@@ -114,6 +121,56 @@ export function registerDefaultPanels() {
     defaultWidth: 4,
     defaultHeight: 3,
     component: GainersLosersPanel,
+  });
+
+  panelRegistry.register({
+    type: 'market_intelligence_command_center',
+    title: 'Market Intelligence Command Center',
+    description: 'Market-wide indices, market breadth, sector performance, and regime cockpit',
+    category: 'Market',
+    defaultWidth: 8,
+    defaultHeight: 4,
+    component: MarketIntelligenceCommandCenterPanel,
+  });
+
+  panelRegistry.register({
+    type: 'market_breadth_panel',
+    title: 'Market Breadth Meter',
+    description: 'Advances, declines, A/D volume, and breadth percentages',
+    category: 'Market',
+    defaultWidth: 4,
+    defaultHeight: 3,
+    component: MarketBreadthPanel,
+  });
+
+  panelRegistry.register({
+    type: 'sector_intelligence',
+    title: 'Sector Performance Matrix',
+    description: 'Sector returns, volatility, and sector correlation matrix',
+    category: 'Market',
+    defaultWidth: 6,
+    defaultHeight: 3,
+    component: SectorIntelligencePanel,
+  });
+
+  panelRegistry.register({
+    type: 'market_regime',
+    title: 'Market Regime Classification',
+    description: 'Historical market regime classification and volatility regime',
+    category: 'Market',
+    defaultWidth: 4,
+    defaultHeight: 3,
+    component: MarketRegimePanel,
+  });
+
+  panelRegistry.register({
+    type: 'market_anomalies',
+    title: 'Market Anomaly Radar',
+    description: 'Statistically detected unusual market price/volume shocks',
+    category: 'Market',
+    defaultWidth: 6,
+    defaultHeight: 3,
+    component: MarketAnomaliesPanel,
   });
 
   panelRegistry.register({

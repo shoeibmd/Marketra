@@ -9,6 +9,7 @@ from uuid import UUID
 
 from app.schemas.ai import ResearchQueryParsed
 from app.services.analytics.event_market_analytics import EventMarketAnalyticsService
+from app.services.analytics.market_intelligence_service import MarketIntelligenceService
 from app.services.analytics.multi_portfolio_service import MultiPortfolioService
 from app.services.analytics.portfolio_analytics import PortfolioAnalyticsService
 from app.services.analytics.portfolio_risk import PortfolioRiskService
@@ -222,6 +223,23 @@ class RAGRetrievalEngine:
                 }
             except Exception as e:
                 evidence["portfolio_analytics"] = {"status": "UNAVAILABLE", "error": str(e)}
+
+        # 7. Market Intelligence Context
+        try:
+            market_intel_svc = MarketIntelligenceService(db_session)
+            overview_breadth = await market_intel_svc.get_market_overview_and_breadth()
+            sectors = await market_intel_svc.get_sector_intelligence()
+            regime = await market_intel_svc.get_market_regime()
+
+            evidence["market_intelligence"] = {
+                "indices": overview_breadth.get("indices"),
+                "market_breadth": overview_breadth.get("market_breadth"),
+                "sector_performance": sectors.get("sector_performance"),
+                "market_regime": regime.get("regime_classification"),
+                "disclaimer": "Market intelligence analytics reflect factual observations and descriptive historical classifications.",
+            }
+        except Exception as e:
+            evidence["market_intelligence"] = {"status": "UNAVAILABLE", "error": str(e)}
 
         # Evidence Confidence Assessment
         total_items = len(evidence["financial_events"]) + len(evidence["news_articles"])

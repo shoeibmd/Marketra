@@ -13,6 +13,7 @@ from app.api.v1.market import router as market_router
 from app.api.v1.news import router as news_router
 from app.api.v1.notifications import router as notifications_router
 from app.api.v1.paper import router as paper_router
+from app.api.v1.market_intelligence import router as market_intelligence_router
 from app.api.v1.portfolio import router as portfolio_router
 from app.api.v1.portfolio_analytics import router as portfolio_analytics_router
 from app.api.v1.portfolio_risk import router as portfolio_risk_router
@@ -30,6 +31,7 @@ api_v1_router = APIRouter(prefix="/api/v1")
 api_v1_router.include_router(auth_router)
 api_v1_router.include_router(instruments_router)
 api_v1_router.include_router(market_router)
+api_v1_router.include_router(market_intelligence_router)
 api_v1_router.include_router(fundamentals_router)
 api_v1_router.include_router(news_router)
 api_v1_router.include_router(events_router)
