@@ -42,6 +42,13 @@ import {
   RelatedCompaniesPanel,
 } from './components/panels/events/EventPanels';
 import { PersonalizedWatchlistPanel } from './components/panels/watchlist/WatchlistPanels';
+import {
+  PortfolioCorrelationPanel,
+  PortfolioDiversificationPanel,
+  PortfolioRiskContributionPanel,
+  PortfolioRiskOverviewPanel,
+  PortfolioStressTestPanel,
+} from './components/panels/risk/PortfolioRiskPanels';
 import './components/panels/analytics/AnalyticsPanels';
 import './components/panels/paper/PaperTradingPanels';
 import './components/panels/trading/TradingPanels';
@@ -253,7 +260,57 @@ export function registerDefaultPanels() {
     component: KeyRatiosPanel,
   });
 
-  // Phase 15 - Portfolio Panels
+  // Phase 15 & 25 - Portfolio Risk Panels
+  panelRegistry.register({
+    type: 'portfolio_risk_overview',
+    title: 'Portfolio Risk & VaR Overview',
+    description: 'Historical VaR, Expected Shortfall (CVaR), and risk summary',
+    category: 'Portfolio',
+    defaultWidth: 6,
+    defaultHeight: 3,
+    component: PortfolioRiskOverviewPanel,
+  });
+
+  panelRegistry.register({
+    type: 'portfolio_stress_test',
+    title: 'Portfolio Stress Testing Simulator',
+    description: 'Hypothetical market shocks, sector shocks, and P&L impact analysis',
+    category: 'Portfolio',
+    defaultWidth: 6,
+    defaultHeight: 4,
+    component: PortfolioStressTestPanel,
+  });
+
+  panelRegistry.register({
+    type: 'portfolio_correlation',
+    title: 'Holdings Correlation Matrix',
+    description: 'Holding-to-holding return correlation and highly correlated pair detection',
+    category: 'Portfolio',
+    defaultWidth: 6,
+    defaultHeight: 4,
+    component: PortfolioCorrelationPanel,
+  });
+
+  panelRegistry.register({
+    type: 'portfolio_diversification',
+    title: 'Diversification & HHI Concentration',
+    description: 'Sector concentration, Herfindahl-Hirschman index, and diversification score',
+    category: 'Portfolio',
+    defaultWidth: 4,
+    defaultHeight: 3,
+    component: PortfolioDiversificationPanel,
+  });
+
+  panelRegistry.register({
+    type: 'portfolio_risk_contribution',
+    title: 'Asset Risk Contribution',
+    description: 'Marginal risk contribution by company and sector',
+    category: 'Portfolio',
+    defaultWidth: 4,
+    defaultHeight: 3,
+    component: PortfolioRiskContributionPanel,
+  });
+
   panelRegistry.register({
     type: 'portfolio_analytics',
     title: 'Portfolio Risk & Intelligence Analytics',

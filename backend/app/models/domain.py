@@ -790,6 +790,37 @@ class PortfolioAnalyticsSnapshot(Base):
     metrics_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
 
 
+# Phase 25: Portfolio Risk Analytics Models
+class PortfolioRiskSnapshot(Base):
+    __tablename__ = "portfolio_risk_snapshots"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    account_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("paper_trading_accounts.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    portfolio_value: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    volatility_pct: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    var_95_pct: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    expected_shortfall_95_pct: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    drawdown_pct: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0.00"), nullable=False)
+    sector_concentration_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    company_concentration_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    diversification_metrics_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    risk_contribution_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    methodology_metadata_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    data_quality_status: Mapped[str] = mapped_column(String(30), default="AVAILABLE", nullable=False, index=True)
+
+
 class AIDocument(Base):
     __tablename__ = "ai_documents"
 

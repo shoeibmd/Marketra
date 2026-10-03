@@ -291,6 +291,39 @@ class ApiClient {
   async getPortfolioAnalytics(): Promise<any> {
     return this.request<any>('/api/v1/portfolio-analytics/summary');
   }
+
+  // Phase 25: Advanced Portfolio Risk & Stress Testing
+  async getPortfolioRiskSummary(): Promise<any> {
+    return this.request<any>('/api/v1/portfolio/risk/summary');
+  }
+
+  async getPortfolioVaR(confidenceLevel = 0.95): Promise<any> {
+    return this.request<any>(`/api/v1/portfolio/risk/var?confidence_level=${confidenceLevel}`);
+  }
+
+  async getPortfolioCorrelation(): Promise<any> {
+    return this.request<any>('/api/v1/portfolio/risk/correlation');
+  }
+
+  async getPortfolioDiversification(): Promise<any> {
+    return this.request<any>('/api/v1/portfolio/risk/diversification');
+  }
+
+  async getPortfolioRiskContribution(): Promise<any> {
+    return this.request<any>('/api/v1/portfolio/risk/contribution');
+  }
+
+  async runPortfolioStressTest(body: {
+    market_shock_pct?: number;
+    sector_shocks?: Record<string, number>;
+    symbol_shocks?: Record<string, number>;
+    scenario_name?: string;
+  }): Promise<any> {
+    return this.request<any>('/api/v1/portfolio/risk/stress-test', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
 }
 
 export const api = new ApiClient();
