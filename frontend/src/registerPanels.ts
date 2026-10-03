@@ -54,6 +54,11 @@ import {
   PortfolioRiskAlertSettingsPanel,
   PortfolioRiskHistoryPanel,
 } from './components/panels/risk/PortfolioRiskAlertPanels';
+import {
+  PortfolioDataQualityPanel,
+  PortfolioPerformanceSummaryPanel,
+  PortfolioRiskCommandCenterPanel,
+} from './components/panels/risk/PortfolioRiskCommandCenterPanels';
 import './components/panels/analytics/AnalyticsPanels';
 import './components/panels/paper/PaperTradingPanels';
 import './components/panels/trading/TradingPanels';
@@ -334,6 +339,36 @@ export function registerDefaultPanels() {
     defaultWidth: 4,
     defaultHeight: 3,
     component: PortfolioRiskAlertSettingsPanel,
+  });
+
+  panelRegistry.register({
+    type: 'portfolio_risk_command_center',
+    title: 'Portfolio Risk Command Center',
+    description: 'Executive portfolio risk, performance, alerts, and stress testing cockpit',
+    category: 'Portfolio',
+    defaultWidth: 8,
+    defaultHeight: 4,
+    component: PortfolioRiskCommandCenterPanel,
+  });
+
+  panelRegistry.register({
+    type: 'portfolio_performance_summary',
+    title: 'Performance vs NIFTY50 / SENSEX',
+    description: 'Period returns compared against major Indian indices',
+    category: 'Portfolio',
+    defaultWidth: 6,
+    defaultHeight: 3,
+    component: PortfolioPerformanceSummaryPanel,
+  });
+
+  panelRegistry.register({
+    type: 'portfolio_data_quality',
+    title: 'Data Quality & Telemetry Center',
+    description: 'Data-quality statuses and statistical observation counts',
+    category: 'Portfolio',
+    defaultWidth: 4,
+    defaultHeight: 3,
+    component: PortfolioDataQualityPanel,
   });
 
   panelRegistry.register({

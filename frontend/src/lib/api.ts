@@ -363,6 +363,15 @@ class ApiClient {
   async getRiskHistory(): Promise<any> {
     return this.request<any>('/api/v1/portfolio/risk/history');
   }
+
+  // Phase 27: Portfolio Risk Command Center & Executive Intelligence
+  async getRiskCommandCenterData(): Promise<any> {
+    return this.request<any>('/api/v1/portfolio/risk-command-center');
+  }
+
+  async exportRiskCommandCenterReport(): Promise<any> {
+    return this.request<any>('/api/v1/portfolio/risk-command-center/export');
+  }
 }
 
 export const api = new ApiClient();
