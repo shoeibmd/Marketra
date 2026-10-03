@@ -14,6 +14,7 @@ from app.api.v1.news import router as news_router
 from app.api.v1.notifications import router as notifications_router
 from app.api.v1.paper import router as paper_router
 from app.api.v1.portfolio import router as portfolio_router
+from app.api.v1.portfolio_analytics import router as portfolio_analytics_router
 from app.api.v1.reconciliation import router as reconciliation_router
 from app.api.v1.risk import router as risk_router
 from app.api.v1.trading import router as trading_router
@@ -37,6 +38,7 @@ api_v1_router.include_router(risk_router)
 api_v1_router.include_router(reconciliation_router)
 api_v1_router.include_router(admin_router)
 api_v1_router.include_router(portfolio_router)
+api_v1_router.include_router(portfolio_analytics_router)
 api_v1_router.include_router(workspaces_router)
 api_v1_router.include_router(ai_router)
 api_v1_router.include_router(health_router)

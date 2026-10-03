@@ -5,8 +5,11 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.domain import ArticleInstrument, EventCompanyRelationship, FinancialEvent, Instrument, NewsArticle
+from uuid import UUID
+
 from app.schemas.ai import ResearchQueryParsed
 from app.services.analytics.event_market_analytics import EventMarketAnalyticsService
+from app.services.analytics.portfolio_analytics import PortfolioAnalyticsService
 from app.services.providers.mock import MockProvider
 
 mock_market_provider = MockProvider()
@@ -26,6 +29,7 @@ class RAGRetrievalEngine:
     async def retrieve_evidence(
         parsed: ResearchQueryParsed,
         db_session: AsyncSession,
+        user_id: UUID | None = None,
     ) -> dict[str, Any]:
         now = datetime.now(UTC)
         start_date = now - timedelta(days=parsed.date_range_days)
@@ -151,6 +155,29 @@ class RAGRetrievalEngine:
             evidence["relationships"] = [
                 {"symbol": r[0], "name": r[1], "role": r[2], "note": r[3]} for r in rel_res.all()
             ]
+
+        # 6. Portfolio Intelligence Context (if user_id provided)
+        if user_id:
+            try:
+                portfolio_analytics_svc = PortfolioAnalyticsService(db_session)
+                portfolio_analytics = await portfolio_analytics_svc.generate_portfolio_analytics(user_id=user_id)
+
+                # Filter portfolio evidence if specific symbol is queried
+                pos_match = None
+                if parsed.symbol and "positions" in portfolio_analytics:
+                    for pos in portfolio_analytics["positions"]:
+                        if pos.get("symbol") == parsed.symbol:
+                            pos_match = pos
+                            break
+
+                evidence["portfolio_analytics"] = {
+                    "account_summary": portfolio_analytics.get("summary"),
+                    "risk_analytics": portfolio_analytics.get("risk_analytics"),
+                    "queried_symbol_position": pos_match,
+                    "disclaimer": "Portfolio context is factual internal position data.",
+                }
+            except Exception as e:
+                evidence["portfolio_analytics"] = {"status": "UNAVAILABLE", "error": str(e)}
 
         # Evidence Confidence Assessment
         total_items = len(evidence["financial_events"]) + len(evidence["news_articles"])

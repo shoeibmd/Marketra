@@ -25,6 +25,7 @@ import {
 import {
   AddTransactionPanel,
   HoldingsPanel,
+  PortfolioAnalyticsPanel,
   PortfolioSummaryPanel,
   TransactionHistoryPanel,
 } from './components/panels/portfolio/PortfolioPanels';
@@ -253,6 +254,16 @@ export function registerDefaultPanels() {
   });
 
   // Phase 15 - Portfolio Panels
+  panelRegistry.register({
+    type: 'portfolio_analytics',
+    title: 'Portfolio Risk & Intelligence Analytics',
+    description: 'Sharpe/Sortino ratios, max drawdown, sector concentration, and benchmark alpha',
+    category: 'Portfolio',
+    defaultWidth: 6,
+    defaultHeight: 4,
+    component: PortfolioAnalyticsPanel,
+  });
+
   panelRegistry.register({
     type: 'portfolio_summary',
     title: 'Portfolio Summary',

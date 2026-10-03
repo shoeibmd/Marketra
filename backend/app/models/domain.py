@@ -762,6 +762,34 @@ class OrderConfirmation(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 
+# Phase 24: Portfolio Intelligence Models
+class PortfolioAnalyticsSnapshot(Base):
+    __tablename__ = "portfolio_analytics_snapshots"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    account_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("paper_trading_accounts.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    total_equity: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    cash_balance: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    positions_value: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    realized_pnl: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    unrealized_pnl: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    drawdown_pct: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0.00"), nullable=False)
+    exposure_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    metrics_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+
+
 class AIDocument(Base):
     __tablename__ = "ai_documents"
 

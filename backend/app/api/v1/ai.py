@@ -38,7 +38,7 @@ async def execute_source_grounded_research(
 
     # 2. Retrieve multi-source evidence
     try:
-        evidence = await RAGRetrievalEngine.retrieve_evidence(parsed, db)
+        evidence = await RAGRetrievalEngine.retrieve_evidence(parsed, db, user_id=current_user.id)
     except Exception:
         evidence = {
             "parsed_query": parsed.model_dump(),

@@ -287,6 +287,10 @@ class ApiClient {
   async getPortfolioSummary(): Promise<PortfolioSummary> {
     return this.request<PortfolioSummary>('/api/v1/portfolio/summary');
   }
+
+  async getPortfolioAnalytics(): Promise<any> {
+    return this.request<any>('/api/v1/portfolio-analytics/summary');
+  }
 }
 
 export const api = new ApiClient();
