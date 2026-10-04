@@ -10,16 +10,20 @@ client = TestClient(app)
 
 
 def test_password_hashing_and_complexity() -> None:
-    hashed = hash_password("Secret123")
-    assert verify_password("Secret123", hashed) is True
-    assert verify_password("Wrong123", hashed) is False
+    hashed = hash_password("Secret123!")
+    assert verify_password("Secret123!", hashed) is True
+    assert verify_password("Wrong123!", hashed) is False
 
-    valid, _ = validate_password_complexity("Secret123")
+    valid, _ = validate_password_complexity("Secret123!")
     assert valid is True
 
     valid_short, msg = validate_password_complexity("short")
     assert valid_short is False
     assert "8 characters" in msg
+
+    valid_no_special, msg_spec = validate_password_complexity("Secret123")
+    assert valid_no_special is False
+    assert "special character" in msg_spec
 
 
 def test_jwt_token_flow() -> None:
@@ -36,7 +40,7 @@ def test_auth_api_register_and_login() -> None:
     # 1. Register new user
     reg_payload = {
         "email": "newuser@terminal.org",
-        "password": "SecurePassword123",
+        "password": "SecurePassword123!",
         "full_name": "New Trader",
     }
     res_reg = client.post("/api/v1/auth/register", json=reg_payload)
@@ -48,7 +52,7 @@ def test_auth_api_register_and_login() -> None:
     assert res_dup.status_code == 400
 
     # 2. Login
-    login_payload = {"email": "newuser@terminal.org", "password": "SecurePassword123"}
+    login_payload = {"email": "newuser@terminal.org", "password": "SecurePassword123!"}
     res_login = client.post("/api/v1/auth/login", json=login_payload)
     assert res_login.status_code == 200
     tokens = res_login.json()

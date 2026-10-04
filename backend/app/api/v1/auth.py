@@ -76,7 +76,8 @@ async def register(
     db: AsyncSession = Depends(get_db),
 ) -> UserProfileResponse:
     """Register a new user in PostgreSQL database."""
-    stmt = select(User).where(User.email == str(req.email))
+    email_clean = str(req.email).strip().lower()
+    stmt = select(User).where(User.email == email_clean)
     res = await db.execute(stmt)
     existing_user = res.scalar_one_or_none()
 
@@ -95,7 +96,7 @@ async def register(
 
     user = User(
         id=uuid.uuid4(),
-        email=str(req.email),
+        email=email_clean,
         hashed_password=hash_password(req.password),
         full_name=req.full_name,
         role="user",
@@ -122,7 +123,8 @@ async def login(
     db: AsyncSession = Depends(get_db),
 ) -> TokenResponse:
     """Authenticate email/password against PostgreSQL database and return JWT token pair."""
-    stmt = select(User).where(User.email == str(req.email))
+    email_clean = str(req.email).strip().lower()
+    stmt = select(User).where(User.email == email_clean)
     res = await db.execute(stmt)
     user = res.scalar_one_or_none()
 

@@ -23,6 +23,16 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "dev_secret_key_change_in_production_32bytes_min"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 11520
 
+    BACKEND_CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+
+    MARKETRA_BOOTSTRAP_ADMIN_EMAIL: str | None = None
+    MARKETRA_BOOTSTRAP_ADMIN_PASSWORD: str | None = None
+
     @property
     def postgres_async_url(self) -> str:
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
