@@ -29,7 +29,7 @@ async def readyz(db=Depends(get_db)) -> dict[str, str]:
 
 @router.get("/healthz/detailed")
 async def healthz_detailed() -> dict[str, Any]:
-    """Component breakdown for system observability."""
+    """Component breakdown for system observability and provider telemetry."""
     return {
         "status": "healthy",
         "components": {
@@ -38,6 +38,12 @@ async def healthz_detailed() -> dict[str, Any]:
             "news_ingestion": {"status": "up", "last_check": "2026-09-15T12:00:00Z"},
             "celery_workers": {"status": "up", "active_tasks": 0},
             "websocket_server": {"status": "up", "connections": 1},
+            "providers": {
+                "market_data_provider": {"name": "MockProvider", "type": "MOCK", "status": "up"},
+                "ai_provider": {"name": "MockAIProvider", "type": "MOCK", "status": "up"},
+                "news_provider": {"name": "RSSNewsProvider", "type": "REAL_RSS", "status": "up"},
+                "broker_adapter": {"name": "MockLiveBrokerAdapter", "type": "LIVE_DISABLED", "status": "safety_gated"},
+            },
         },
     }
 

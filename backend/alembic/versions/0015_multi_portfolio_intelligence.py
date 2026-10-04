@@ -19,6 +19,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # 0. Add portfolio_type column to paper_trading_accounts if not exists
+    op.add_column("paper_trading_accounts", sa.Column("portfolio_type", sa.String(length=30), server_default="PAPER", nullable=False))
+
     # 1. Portfolio Groups Table
     op.create_table(
         "portfolio_groups",
@@ -43,3 +46,4 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_table("portfolio_group_memberships")
     op.drop_table("portfolio_groups")
+    op.drop_column("paper_trading_accounts", "portfolio_type")

@@ -5,7 +5,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.domain import Instrument, PaperPosition, PaperTrade, PaperTradingAccount, User
+from app.models.domain import Instrument, PaperOrder, PaperPosition, PaperTrade, PaperTradingAccount, User
 from app.services.analytics.portfolio_analytics import PortfolioAnalyticsService
 
 
@@ -51,11 +51,23 @@ async def test_portfolio_analytics_service_calculation(db_session: AsyncSession)
     )
     db_session.add(position)
 
-    trade = PaperTrade(
+    order = PaperOrder(
         id=uuid4(),
         account_id=account.id,
         instrument_id=instrument.id,
-        trade_side="BUY",
+        side="BUY",
+        quantity=Decimal("100.00"),
+        status="EXECUTED",
+    )
+    db_session.add(order)
+    await db_session.flush()
+
+    trade = PaperTrade(
+        id=uuid4(),
+        account_id=account.id,
+        order_id=order.id,
+        instrument_id=instrument.id,
+        side="BUY",
         quantity=Decimal("100.00"),
         execution_price=Decimal("2500.00"),
         realized_pnl=Decimal("25000.00"),

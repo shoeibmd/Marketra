@@ -438,6 +438,7 @@ class PaperTradingAccount(Base):
         index=True,
     )
     name: Mapped[str] = mapped_column(String(100), default="Primary Paper Account", nullable=False)
+    portfolio_type: Mapped[str] = mapped_column(String(30), default="PAPER", nullable=False)
     initial_cash: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("1000000.00"), nullable=False)
     available_cash: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("1000000.00"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)

@@ -8,7 +8,7 @@ from uuid import uuid4
 sys.path.insert(0, "backend")
 
 from httpx import ASGITransport, AsyncClient
-from main import app
+from app.main import app
 from app.db.session import PostgresSessionLocal
 from app.models.domain import User, Instrument, PaperTradingAccount, PaperPosition, PaperTrade, Quote, OHLCV, NewsArticle, FinancialEvent
 from app.core.auth.jwt_handler import create_access_token
