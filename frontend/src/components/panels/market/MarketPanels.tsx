@@ -28,9 +28,14 @@ export const MarketOverviewPanel: React.FC<PanelProps> = () => {
   return (
     <div className="space-y-4 font-mono">
       <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-        <span className="text-slate-400 text-xs flex items-center gap-1">
-          <Activity className="h-3.5 w-3.5 text-emerald-400" /> NSE/BSE Status:
-        </span>
+        <div className="flex items-center space-x-2">
+          <span className="text-slate-400 text-xs flex items-center gap-1">
+            <Activity className="h-3.5 w-3.5 text-emerald-400" /> NSE/BSE Status:
+          </span>
+          <span className="bg-amber-950/80 text-amber-400 border border-amber-800/60 text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wider">
+            DEMO DATA
+          </span>
+        </div>
         <span className="text-emerald-400 text-xs font-bold bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
           {data.market_status}
         </span>

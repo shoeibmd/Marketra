@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   BarChart3,
   TrendingUp,
@@ -11,11 +11,15 @@ import {
   LogOut,
   FolderKanban,
   Trash2,
+  Loader2,
+  Building2,
 } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { NewsToastNotification } from './notifications/NewsToastNotification';
+import { api } from '../lib/api';
+import { Instrument } from '../types/market';
 
 interface NavigationProps {
   activeTab: string;
@@ -32,11 +36,70 @@ export function TerminalLayout({ activeTab, setActiveTab, children }: Navigation
     selectWorkspace,
     createNewWorkspace,
     deleteCurrentWorkspace,
+    updateWorkspaceLayout,
   } = useWorkspaceStore();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Instrument[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+
   const [newWsName, setNewWsName] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      setShowDropdown(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setIsSearching(true);
+      setShowDropdown(true);
+      api
+        .searchInstruments(searchQuery)
+        .then((res) => {
+          setSearchResults(res);
+          setIsSearching(false);
+        })
+        .catch(() => {
+          setSearchResults([]);
+          setIsSearching(false);
+        });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelectInstrument = (inst: Instrument) => {
+    setShowDropdown(false);
+    setSearchQuery('');
+    setActiveTab('charts');
+
+    if (activeWorkspace) {
+      const updatedLayout = activeWorkspace.layout_config.map((panel) => {
+        if (panel.panelType === 'chart') {
+          return { ...panel, symbol: inst.symbol, title: `${inst.symbol} Technical Candlestick Chart` };
+        }
+        return panel;
+      });
+      updateWorkspaceLayout(updatedLayout);
+    }
+  };
 
   const navItems = [
     { id: 'market', label: 'Market Overview', icon: BarChart3 },
@@ -123,16 +186,67 @@ export function TerminalLayout({ activeTab, setActiveTab, children }: Navigation
       {/* Main Terminal Shell Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Top Command & Workspace Selector Bar */}
-        <header className="h-12 border-b border-slate-800 bg-slate-900/30 flex items-center justify-between px-4">
-          <div className="relative w-80">
+        <header className="h-12 border-b border-slate-800 bg-slate-900/30 flex items-center justify-between px-4 z-40">
+          <div className="relative w-80" ref={dropdownRef}>
             <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
             <input
               type="text"
-              placeholder="Search symbol (Cmd+K)..."
+              placeholder="Search company/symbol (RELIANCE, TCS...)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded text-xs pl-9 pr-3 py-1.5 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
+              onFocus={() => {
+                if (searchQuery.trim()) setShowDropdown(true);
+              }}
+              className="w-full bg-slate-950 border border-slate-800 rounded text-xs pl-9 pr-8 py-1.5 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
             />
+            {isSearching && (
+              <Loader2 className="absolute right-3 top-2.5 h-3.5 w-3.5 text-emerald-400 animate-spin" />
+            )}
+
+            {/* Global Search Results Dropdown */}
+            {showDropdown && (
+              <div className="absolute left-0 right-0 mt-1.5 bg-slate-900 border border-slate-800 rounded-md shadow-2xl overflow-hidden z-50 text-xs max-h-72 overflow-y-auto">
+                {isSearching ? (
+                  <div className="p-3 text-center text-slate-500 flex items-center justify-center space-x-2">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-400" />
+                    <span>Searching instruments...</span>
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  <div className="divide-y divide-slate-800/60">
+                    <div className="px-3 py-1.5 bg-slate-950 text-[10px] text-slate-500 font-bold uppercase tracking-wider flex justify-between">
+                      <span>Symbol / Name</span>
+                      <span>Exchange / Type</span>
+                    </div>
+                    {searchResults.map((inst) => (
+                      <button
+                        key={inst.id}
+                        onClick={() => handleSelectInstrument(inst)}
+                        className="w-full text-left px-3 py-2 hover:bg-slate-800/80 transition-colors flex items-center justify-between group"
+                      >
+                        <div className="flex items-center space-x-2 truncate">
+                          <Building2 className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0" />
+                          <div className="truncate">
+                            <span className="font-bold text-slate-100 group-hover:text-emerald-400 mr-2">
+                              {inst.symbol}
+                            </span>
+                            <span className="text-slate-400 text-[11px] truncate">{inst.name}</span>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0 ml-2">
+                          <span className="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700">
+                            {inst.exchange_code || 'NSE'} • {inst.instrument_type}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-slate-400">
+                    No companies found.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Workspace Controls */}

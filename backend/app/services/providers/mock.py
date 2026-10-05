@@ -171,18 +171,28 @@ class MockProvider(BaseMarketDataProvider):
                 base_price = stock["base_price"]
                 break
 
-        step = timedelta(days=1) if interval == "1d" else timedelta(minutes=1)
+        if interval == "1d":
+            step = timedelta(days=1)
+        elif interval == "1h":
+            step = timedelta(hours=1)
+        elif interval == "5m":
+            step = timedelta(minutes=5)
+        else:  # 1m
+            step = timedelta(minutes=1)
+
         current = start_time
         candles: list[NormalizedOHLCV] = []
 
         step_idx = 0
         while current <= end_time:
             drift = math.sin(step_idx / 20.0) * (base_price * 0.015)
-            noise = (math.cos(step_idx) * 0.004) * base_price
+            noise = (math.cos(step_idx * 0.5) * 0.004) * base_price
             open_p = round(base_price + drift + noise, 2)
-            high_p = round(open_p * 1.008, 2)
-            low_p = round(open_p * 0.992, 2)
-            close_p = round(open_p + (math.sin(step_idx) * 0.5), 2)
+            delta = round((math.sin(step_idx) * 0.005) * base_price, 2)
+            close_p = round(open_p + delta, 2)
+
+            high_p = round(max(open_p, close_p) + abs(math.cos(step_idx)) * (base_price * 0.003) + 0.5, 2)
+            low_p = round(min(open_p, close_p) - abs(math.sin(step_idx)) * (base_price * 0.003) - 0.5, 2)
             vol = round(25000.0 + (step_idx % 100) * 500, 2)
 
             candles.append(

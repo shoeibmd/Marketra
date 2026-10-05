@@ -1,0 +1,215 @@
+On branch main
+Your branch is based on 'origin/main', but the upstream is gone.
+  (use "git branch --unset-upstream" to fixup)
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	new file:   .env.example
+	modified:   .gitignore
+	new file:   PHASE_10_EVENT_INTELLIGENCE_REPORT.md
+	new file:   PHASE_11_AI_RESEARCH_ASSISTANT_REPORT.md
+	new file:   PHASE_13_HISTORICAL_ANALYTICS_REPORT.md
+	new file:   PHASE_14_PAPER_TRADING_REPORT.md
+	new file:   PHASE_15_BROKER_RISK_ENGINE_REPORT.md
+	new file:   PHASE_16_CONTROLLED_LIVE_TRADING_REPORT.md
+	new file:   PHASE_9_PRODUCTION_LAUNCH_REPORT.md
+	new file:   backend/Dockerfile.dev
+	new file:   backend/alembic.ini
+	new file:   backend/alembic/env.py
+	new file:   backend/alembic/script.py.mako
+	new file:   backend/alembic/versions/0001_initial_schema.py
+	new file:   backend/alembic/versions/0002_news_intelligence_fields.py
+	new file:   backend/alembic/versions/0003_article_instrument_junction.py
+	new file:   backend/alembic/versions/0004_news_ai_analysis_fields.py
+	new file:   backend/alembic/versions/0005_financial_events_and_relationships.py
+	new file:   backend/alembic/versions/0006_watchlists_and_notifications.py
+	new file:   backend/alembic/versions/0007_event_market_observations.py
+	new file:   backend/alembic/versions/0008_paper_trading.py
+	new file:   backend/alembic/versions/0009_broker_risk_engine.py
+	new file:   backend/alembic/versions/0010_controlled_live_trading.py
+	new file:   backend/alembic/versions/0011_portfolio_intelligence.py
+	new file:   backend/alembic/versions/0012_portfolio_risk_analytics.py
+	new file:   backend/alembic/versions/0013_portfolio_risk_alerts.py
+	new file:   backend/alembic/versions/0014_portfolio_briefings.py
+	new file:   backend/alembic/versions/0015_multi_portfolio_intelligence.py
+	new file:   backend/alembic/versions/0016_market_intelligence.py
+	modified:   backend/app/api/v1/__init__.py
+	new file:   backend/app/api/v1/admin.py
+	modified:   backend/app/api/v1/ai.py
+	new file:   backend/app/api/v1/analytics.py
+	modified:   backend/app/api/v1/auth.py
+	new file:   backend/app/api/v1/brokers.py
+	new file:   backend/app/api/v1/events.py
+	modified:   backend/app/api/v1/health.py
+	modified:   backend/app/api/v1/market.py
+	new file:   backend/app/api/v1/market_intelligence.py
+	new file:   backend/app/api/v1/multi_portfolio.py
+	modified:   backend/app/api/v1/news.py
+	new file:   backend/app/api/v1/notifications.py
+	new file:   backend/app/api/v1/paper.py
+	new file:   backend/app/api/v1/portfolio_analytics.py
+	new file:   backend/app/api/v1/portfolio_briefings.py
+	new file:   backend/app/api/v1/portfolio_risk.py
+	new file:   backend/app/api/v1/portfolio_risk_alerts.py
+	new file:   backend/app/api/v1/portfolio_risk_command_center.py
+	new file:   backend/app/api/v1/reconciliation.py
+	new file:   backend/app/api/v1/risk.py
+	new file:   backend/app/api/v1/trading.py
+	new file:   backend/app/api/v1/watchlists.py
+	modified:   backend/app/api/v1/workspaces.py
+	new file:   backend/app/api/websockets.py
+	modified:   backend/app/core/auth/password.py
+	modified:   backend/app/core/config.py
+	modified:   backend/app/db/session.py
+	modified:   backend/app/main.py
+	modified:   backend/app/models/domain.py
+	modified:   backend/app/schemas/ai.py
+	modified:   backend/app/services/ai/base.py
+	modified:   backend/app/services/ai/mock.py
+	new file:   backend/app/services/analytics/event_market_analytics.py
+	new file:   backend/app/services/analytics/market_intelligence_service.py
+	new file:   backend/app/services/analytics/multi_portfolio_service.py
+	new file:   backend/app/services/analytics/portfolio_analytics.py
+	new file:   backend/app/services/analytics/portfolio_briefing_service.py
+	new file:   backend/app/services/analytics/portfolio_change_detection.py
+	new file:   backend/app/services/analytics/portfolio_risk.py
+	new file:   backend/app/services/analytics/portfolio_risk_command_center.py
+	new file:   backend/app/services/analytics/portfolio_risk_monitoring.py
+	new file:   backend/app/services/brokers/adapter.py
+	new file:   backend/app/services/news/ai_enrichment.py
+	new file:   backend/app/services/news/alert_engine.py
+	new file:   backend/app/services/news/base.py
+	new file:   backend/app/services/news/deduplication.py
+	new file:   backend/app/services/news/health.py
+	new file:   backend/app/services/news/matcher.py
+	new file:   backend/app/services/news/rss.py
+	new file:   backend/app/services/paper/backtest_engine.py
+	new file:   backend/app/services/paper/trading_engine.py
+	modified:   backend/app/services/providers/mock.py
+	new file:   backend/app/services/rag/query_parser.py
+	new file:   backend/app/services/rag/retrieval_engine.py
+	new file:   backend/app/services/risk/risk_engine.py
+	new file:   backend/app/services/tasks.py
+	new file:   backend/app/services/trading/activation_service.py
+	new file:   backend/app/services/trading/confirmation_service.py
+	new file:   backend/app/services/trading/order_service.py
+	new file:   backend/app/services/trading/reconciliation_service.py
+	modified:   backend/pyproject.toml
+	new file:   backend/scripts/seed_mock_data.py
+	new file:   backend/tests/test_ai_research_assistant.py
+	modified:   backend/tests/test_auth.py
+	new file:   backend/tests/test_broker_and_risk_engine.py
+	new file:   backend/tests/test_controlled_live_trading.py
+	new file:   backend/tests/test_event_intelligence.py
+	new file:   backend/tests/test_event_market_analytics.py
+	new file:   backend/tests/test_market_intelligence.py
+	new file:   backend/tests/test_multi_portfolio_intelligence.py
+	new file:   backend/tests/test_news_ai_intelligence.py
+	new file:   backend/tests/test_news_foundation.py
+	new file:   backend/tests/test_news_mapping.py
+	new file:   backend/tests/test_news_market_correlation.py
+	new file:   backend/tests/test_paper_trading_and_backtest.py
+	new file:   backend/tests/test_portfolio_analytics.py
+	new file:   backend/tests/test_portfolio_briefings.py
+	new file:   backend/tests/test_portfolio_risk_alerts.py
+	new file:   backend/tests/test_portfolio_risk_analytics.py
+	new file:   backend/tests/test_portfolio_risk_command_center.py
+	new file:   backend/tests/test_watchlists_and_notifications.py
+	modified:   backend/tests/test_workspaces.py
+	modified:   backend/uv.lock
+	new file:   docs/AI_FINANCIAL_INTELLIGENCE.md
+	new file:   docs/AI_RESEARCH_ASSISTANT.md
+	new file:   docs/BACKTEST_ENGINE.md
+	new file:   docs/BACKUP_AND_RECOVERY.md
+	new file:   docs/BROKER_ARCHITECTURE.md
+	new file:   docs/BROKER_CONFIGURATION.md
+	new file:   docs/BROKER_RECONCILIATION.md
+	new file:   docs/COMPANY_RELATIONSHIPS.md
+	new file:   docs/CONTROLLED_LIVE_TRADING.md
+	new file:   docs/DAILY_OPERATIONS_RUNBOOK.md
+	new file:   docs/EMERGENCY_TRADING_SHUTDOWN.md
+	new file:   docs/END_TO_END_FUNCTIONAL_VALIDATION_REPORT.md
+	new file:   docs/EVENT_INTELLIGENCE.md
+	new file:   docs/FINAL_PRODUCTION_READINESS_REPORT.md
+	new file:   docs/HISTORICAL_ANALYTICS.md
+	new file:   docs/LIVE_TRADING_ACTIVATION_CHECKLIST.md
+	new file:   docs/LIVE_TRADING_SAFETY.md
+	new file:   docs/MARKET_INTELLIGENCE.md
+	new file:   docs/MULTI_PORTFOLIO_INTELLIGENCE.md
+	new file:   docs/NEWS_CLUSTERING.md
+	new file:   docs/ORDER_STATE_MACHINE.md
+	new file:   docs/PAPER_TRADING.md
+	new file:   docs/PAPER_TRADING_RISK.md
+	new file:   docs/PHASE_17_ARCHITECTURE_AUDIT.md
+	new file:   docs/PHASE_17_FINAL_PRODUCTION_AUDIT_REPORT.md
+	new file:   docs/PHASE_18_CONTROLLED_PRODUCTION_ACTIVATION_REPORT.md
+	new file:   docs/PHASE_19_BROKER_SANDBOX_VALIDATION_REPORT.md
+	new file:   docs/PHASE_20_MANUAL_LIVE_TRADING_PILOT_REPORT.md
+	new file:   docs/PHASE_21_BASELINE.md
+	new file:   docs/PHASE_21_POST_PILOT_STABILIZATION_REPORT.md
+	new file:   docs/PHASE_22_PRODUCTION_RELEASE_REPORT.md
+	new file:   docs/PHASE_23_PRODUCTION_OBSERVATION_REPORT.md
+	new file:   docs/PHASE_24_PORTFOLIO_INTELLIGENCE_REPORT.md
+	new file:   docs/PHASE_25_PORTFOLIO_RISK_REPORT.md
+	new file:   docs/PHASE_26_PORTFOLIO_RISK_ALERTS_REPORT.md
+	new file:   docs/PHASE_27_PORTFOLIO_RISK_COMMAND_CENTER_REPORT.md
+	new file:   docs/PHASE_28_PORTFOLIO_BRIEFINGS_REPORT.md
+	new file:   docs/PHASE_29_MULTI_PORTFOLIO_INTELLIGENCE_REPORT.md
+	new file:   docs/PHASE_30_MARKET_INTELLIGENCE_REPORT.md
+	new file:   docs/PHASE_31_REAL_DATA_PROVIDER_INTEGRATION_REPORT.md
+	new file:   docs/PHASE_32_PRODUCTION_DATA_QUALITY_REPORT.md
+	new file:   docs/PHASE_33_PRODUCTION_SOAK_TEST_REPORT.md
+	new file:   docs/PORTFOLIO_BRIEFINGS.md
+	new file:   docs/PORTFOLIO_INTELLIGENCE.md
+	new file:   docs/PORTFOLIO_RISK_ANALYTICS.md
+	new file:   docs/PORTFOLIO_RISK_COMMAND_CENTER.md
+	new file:   docs/PORTFOLIO_RISK_MONITORING.md
+	new file:   docs/PRODUCTION_PERFORMANCE_BASELINE.md
+	new file:   docs/PRODUCTION_READINESS.md
+	new file:   docs/PRODUCTION_ROLLBACK.md
+	new file:   docs/PRODUCTION_RUNBOOK.md
+	new file:   docs/RECONCILIATION.md
+	new file:   docs/RELEASE_BASELINE.md
+	new file:   docs/RELEASE_NOTES_v1.1.0.md
+	new file:   docs/RISK_ENGINE.md
+	new file:   docs/STRATEGY_FRAMEWORK.md
+	new file:   docs/TRADING_SAFETY.md
+	new file:   docs/WATCHLISTS_AND_SMART_ALERTS.md
+	new file:   frontend/.env.example
+	modified:   frontend/src/App.tsx
+	modified:   frontend/src/components/TerminalLayout.tsx
+	new file:   frontend/src/components/auth/LoginPage.tsx
+	new file:   frontend/src/components/auth/ProtectedRoute.tsx
+	new file:   frontend/src/components/notifications/NewsToastNotification.tsx
+	new file:   frontend/src/components/panels/admin/SystemStatusPanel.tsx
+	modified:   frontend/src/components/panels/ai/AIPanels.tsx
+	new file:   frontend/src/components/panels/analytics/AnalyticsPanels.tsx
+	new file:   frontend/src/components/panels/briefings/PortfolioBriefingPanels.tsx
+	modified:   frontend/src/components/panels/charts/ChartPanels.tsx
+	new file:   frontend/src/components/panels/events/EventPanels.tsx
+	new file:   frontend/src/components/panels/market/MarketIntelligencePanels.tsx
+	modified:   frontend/src/components/panels/market/MarketPanels.tsx
+	modified:   frontend/src/components/panels/news/NewsPanels.tsx
+	new file:   frontend/src/components/panels/paper/PaperTradingPanels.tsx
+	new file:   frontend/src/components/panels/portfolio/MultiPortfolioPanels.tsx
+	modified:   frontend/src/components/panels/portfolio/PortfolioPanels.tsx
+	new file:   frontend/src/components/panels/risk/PortfolioRiskAlertPanels.tsx
+	new file:   frontend/src/components/panels/risk/PortfolioRiskCommandCenterPanels.tsx
+	new file:   frontend/src/components/panels/risk/PortfolioRiskPanels.tsx
+	new file:   frontend/src/components/panels/trading/TradingPanels.tsx
+	new file:   frontend/src/components/panels/watchlist/WatchlistPanels.tsx
+	modified:   frontend/src/hooks/useWebSocket.ts
+	modified:   frontend/src/lib/api.ts
+	modified:   frontend/src/registerPanels.ts
+	modified:   frontend/src/store/useAuthStore.ts
+	modified:   frontend/src/store/useMarketStore.ts
+	new file:   frontend/src/store/useNotificationStore.ts
+	new file:   frontend/src/store/usePersonalWatchlistStore.ts
+	modified:   frontend/src/store/useWorkspaceStore.ts
+	modified:   frontend/src/types/market.ts
+	new file:   scripts/audit_data_quality_and_reliability.py
+	new file:   scripts/audit_e2e_functional_flow.py
+	new file:   scripts/audit_final_production_readiness.py
+	new file:   scripts/audit_production_soak_test.py
+	new file:   scripts/audit_real_data_providers.py
+	new file:   scripts/validate_operational_readiness.py

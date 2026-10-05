@@ -7,40 +7,53 @@ import { Activity, BarChart2 } from 'lucide-react';
 export const OHLCChartPanel: React.FC<PanelProps> = ({ symbol = 'RELIANCE' }) => {
   const [candles, setCandles] = useState<OHLCV[]>([]);
   const [interval, setInterval] = useState('1d');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
-    api.getOHLCV(symbol, interval, 15).then((res) => {
-      if (isMounted) {
-        setCandles(res);
-        setLoading(false);
-      }
-    });
+    setLoading(true);
+    setError(null);
+    api
+      .getOHLCV(symbol, interval, 30)
+      .then((res) => {
+        if (isMounted) {
+          setCandles(res);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          setError(err.message || 'Failed to load historical data');
+          setLoading(false);
+        }
+      });
     return () => {
       isMounted = false;
     };
   }, [symbol, interval]);
 
-  if (loading) return <div className="text-slate-500 animate-pulse p-4 text-center">Loading Candlestick Feed...</div>;
-
-  const maxPrice = Math.max(...candles.map((c) => c.high), 1);
-  const minPrice = Math.min(...candles.map((c) => c.low), 0);
+  const maxPrice = candles.length > 0 ? Math.max(...candles.map((c) => c.high)) : 1;
+  const minPrice = candles.length > 0 ? Math.min(...candles.map((c) => c.low)) : 0;
 
   return (
     <div className="space-y-3 font-mono">
       <div className="flex items-center justify-between border-b border-slate-800 pb-1.5 text-xs">
-        <span className="font-bold text-slate-200">{symbol} OHLC Candlestick</span>
+        <div className="flex items-center space-x-2">
+          <span className="font-bold text-slate-200">{symbol} OHLC Candlestick</span>
+          <span className="bg-amber-950/80 text-amber-400 border border-amber-800/60 text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wider">
+            DEMO / DEVELOPMENT DATA
+          </span>
+        </div>
         <div className="flex space-x-1">
           {['1m', '5m', '1h', '1d'].map((i) => (
             <button
               key={i}
-              onClick={() => {
-                setLoading(true);
-                setInterval(i);
-              }}
+              onClick={() => setInterval(i)}
               className={`px-1.5 py-0.5 text-[10px] rounded ${
-                interval === i ? 'bg-emerald-950 text-emerald-400 font-bold border border-emerald-800' : 'text-slate-500 hover:text-slate-300'
+                interval === i
+                  ? 'bg-emerald-950 text-emerald-400 font-bold border border-emerald-800'
+                  : 'text-slate-500 hover:text-slate-300'
               }`}
             >
               {i}
@@ -49,25 +62,61 @@ export const OHLCChartPanel: React.FC<PanelProps> = ({ symbol = 'RELIANCE' }) =>
         </div>
       </div>
 
-      <div className="flex items-end justify-between space-x-1.5 bg-slate-950 border border-slate-800 rounded p-3 h-40">
-        {candles.map((c, idx) => {
-          const isGreen = c.close >= c.open;
-          const range = maxPrice - minPrice || 1;
-          const heightPct = Math.max(10, ((c.close - minPrice) / range) * 100);
+      {loading ? (
+        <div className="bg-slate-950 border border-slate-800 rounded p-6 h-48 flex items-center justify-center text-slate-400 text-xs animate-pulse">
+          Loading 30-Day {interval} Historical Candles for {symbol}...
+        </div>
+      ) : error ? (
+        <div className="bg-slate-950 border border-slate-800 rounded p-6 h-48 flex items-center justify-center text-red-400 text-xs">
+          Unable to load historical data. ({error})
+        </div>
+      ) : candles.length === 0 ? (
+        <div className="bg-slate-950 border border-slate-800 rounded p-6 h-48 flex items-center justify-center text-amber-400 text-xs">
+          No historical data available for the selected timeframe.
+        </div>
+      ) : (
+        <div className="bg-slate-950 border border-slate-800 rounded p-3 h-48 flex flex-col justify-between">
+          <div className="flex items-end justify-between space-x-1.5 h-36 border-b border-slate-900 pb-1">
+            {candles.map((c, idx) => {
+              const isGreen = c.close >= c.open;
+              const range = maxPrice - minPrice || 1;
+              const heightPct = Math.max(12, ((c.close - minPrice) / range) * 100);
 
-          return (
-            <div key={idx} className="flex-1 flex flex-col items-center justify-end h-full">
-              <div
-                style={{ height: `${heightPct}%` }}
-                className={`w-full rounded-t transition-all ${
-                  isGreen ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-red-500 hover:bg-red-400'
-                }`}
-                title={`Close: ₹${c.close}`}
-              />
-            </div>
-          );
-        })}
-      </div>
+              const formattedDate = new Date(c.timestamp).toLocaleDateString('en-IN', {
+                month: 'short',
+                day: 'numeric',
+                hour: interval !== '1d' ? '2-digit' : undefined,
+                minute: interval !== '1d' ? '2-digit' : undefined,
+              });
+
+              return (
+                <div key={idx} className="flex-1 flex flex-col items-center justify-end h-full group relative">
+                  <div
+                    style={{ height: `${heightPct}%` }}
+                    className={`w-full rounded-t transition-all ${
+                      isGreen ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-red-500 hover:bg-red-400'
+                    }`}
+                  />
+                  {/* Tooltip on hover */}
+                  <div className="absolute bottom-full mb-1 hidden group-hover:block bg-slate-900 text-slate-200 border border-slate-700 text-[10px] p-2 rounded shadow-xl whitespace-nowrap z-30">
+                    <div className="font-bold text-emerald-400">{symbol} ({formattedDate})</div>
+                    <div>Open: ₹{c.open.toFixed(2)}</div>
+                    <div>High: ₹{c.high.toFixed(2)}</div>
+                    <div>Low: ₹{c.low.toFixed(2)}</div>
+                    <div>Close: ₹{c.close.toFixed(2)}</div>
+                    <div>Vol: {c.volume.toLocaleString()}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex justify-between text-[10px] text-slate-500 pt-1">
+            <span>{new Date(candles[0].timestamp).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</span>
+            <span>Range: 30 Days (1 Month)</span>
+            <span>{new Date(candles[candles.length - 1].timestamp).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

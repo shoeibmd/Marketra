@@ -12,12 +12,49 @@ router = APIRouter(prefix="/instruments", tags=["Instruments"])
 mock_provider = MockProvider()
 
 
+from sqlalchemy import or_, select
+from app.models.domain import Instrument
+
 @router.get("/search", response_model=list[NormalizedInstrument])
 async def search_instruments(
     q: str = Query(..., min_length=1, description="Search symbol or name"),
+    db: AsyncSession = Depends(get_postgres_db),
     current_user: dict[str, Any] = Depends(get_current_user),
 ) -> list[NormalizedInstrument]:
-    """Search instruments by symbol or name."""
+    """Search instruments by symbol or name in PostgreSQL database, with fallback to MockProvider."""
+    term = f"%{q.strip().upper()}%"
+    stmt = (
+        select(Instrument)
+        .where(
+            Instrument.is_active == True,  # noqa: E712
+            or_(
+                Instrument.symbol.ilike(term),
+                Instrument.name.ilike(term),
+            ),
+        )
+        .limit(20)
+    )
+    db_res = await db.execute(stmt)
+    db_instruments = db_res.scalars().all()
+
+    if db_instruments:
+        results = []
+        for inst in db_instruments:
+            results.append(
+                NormalizedInstrument(
+                    id=inst.id,
+                    symbol=inst.symbol,
+                    exchange_code=inst.exchange_code,
+                    name=inst.name,
+                    isin=inst.isin,
+                    currency=inst.currency,
+                    instrument_type=inst.instrument_type,
+                    provider_symbol=f"NSE:{inst.symbol}",
+                )
+            )
+        return results
+
+    # Fallback to provider search if DB has not been seeded yet or for dynamic queries
     res = await mock_provider.search_instruments(q)
     return [NormalizedInstrument.model_validate(item) for item in res]
 
